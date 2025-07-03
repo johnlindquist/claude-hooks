@@ -90,103 +90,15 @@ This command sets up basic Claude Code hooks in your project:
   }
 
   private async generateHookFiles(): Promise<void> {
-    // Copy lib.ts
+    // Get templates directory path
     const distDir = path.dirname(fileURLToPath(import.meta.url))
     const rootDir = path.join(distDir, '..', '..')
     const templatesDir = path.join(rootDir, 'templates')
+
+    // Copy all hook template files
     await fs.copy(path.join(templatesDir, 'hooks', 'lib.ts'), '.claude/hooks/lib.ts')
-
-    // Add session.ts with the saveSessionData function
-    const sessionContent = `import { mkdir } from 'node:fs/promises';
-import { writeFile, readFile } from 'node:fs/promises';
-import * as path from 'path';
-import { tmpdir } from 'node:os';
-
-const SESSIONS_DIR = path.join(tmpdir(), 'claude-hooks-sessions');
-
-export async function saveSessionData(hookType: string, payload: any): Promise<void> {
-  try {
-    // Ensure sessions directory exists
-    await mkdir(SESSIONS_DIR, { recursive: true });
-    
-    const timestamp = new Date().toISOString();
-    const sessionFile = path.join(SESSIONS_DIR, \`\${payload.session_id}.json\`);
-    
-    let sessionData: any[] = [];
-    try {
-      const existing = await readFile(sessionFile, 'utf-8');
-      sessionData = JSON.parse(existing);
-    } catch {
-      // File doesn't exist yet
-    }
-    
-    sessionData.push({
-      timestamp,
-      hookType,
-      payload
-    });
-    
-    await writeFile(sessionFile, JSON.stringify(sessionData, null, 2));
-  } catch (error) {
-    console.error('Failed to save session data:', error);
-  }
-}
-`
-    await fs.writeFile('.claude/hooks/session.ts', sessionContent)
-
-    // Generate default index.ts
-    const indexContent = `#!/usr/bin/env bun
-
-import { runHook, log, type PreToolUsePayload, type PostToolUsePayload, type NotificationPayload, type StopPayload, type HookResponse, type BashToolInput } from './lib';
-import { saveSessionData } from './session';
-
-// PreToolUse handler - validate and potentially block dangerous commands
-async function preToolUse(payload: PreToolUsePayload): Promise<HookResponse> {
-  // Save session data
-  await saveSessionData('PreToolUse', payload);
-  
-  // Example: Block dangerous commands
-  if (payload.tool_name === 'Bash' && payload.tool_input && 'command' in payload.tool_input) {
-    const bashInput = payload.tool_input as BashToolInput;
-    const command = bashInput.command;
-    
-    // Block rm -rf commands
-    if (command && (command.includes('rm -rf /') || command.includes('rm -rf ~'))) {
-      return {
-        action: 'block',
-        stopReason: 'Dangerous command detected: rm -rf on system directories'
-      };
-    }
-  }
-  
-  // Allow all other commands
-  return { action: 'continue' };
-}
-
-// PostToolUse handler - log tool results
-async function postToolUse(payload: PostToolUsePayload): Promise<void> {
-  await saveSessionData('PostToolUse', payload);
-}
-
-// Notification handler - log notifications
-async function notification(payload: NotificationPayload): Promise<void> {
-  await saveSessionData('Notification', payload);
-}
-
-// Stop handler - log session end
-async function stop(payload: StopPayload): Promise<void> {
-  await saveSessionData('Stop', payload);
-}
-
-// Run the hook with our handlers
-runHook({
-  preToolUse,
-  postToolUse,
-  notification,
-  stop
-});
-`
-    await fs.writeFile('.claude/hooks/index.ts', indexContent)
+    await fs.copy(path.join(templatesDir, 'hooks', 'session.ts'), '.claude/hooks/session.ts')
+    await fs.copy(path.join(templatesDir, 'hooks', 'index.ts'), '.claude/hooks/index.ts')
   }
 
   private async updateSettings(): Promise<void> {
