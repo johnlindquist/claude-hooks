@@ -1,6 +1,6 @@
 import * as path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { Command, Flags } from '@oclif/core'
+import {fileURLToPath} from 'node:url'
+import {Command, Flags} from '@oclif/core'
 import chalk from 'chalk'
 import fs from 'fs-extra'
 import ora from 'ora'
@@ -37,7 +37,7 @@ This command sets up basic Claude Code hooks in your project:
   }
 
   public async run(): Promise<void> {
-    const { flags } = await this.parse(Init)
+    const {flags} = await this.parse(Init)
 
     console.log(chalk.blue.bold('\n🪝 Claude Hooks Setup\n'))
 

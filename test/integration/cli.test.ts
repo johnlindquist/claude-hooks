@@ -1,7 +1,7 @@
-import { execSync } from 'node:child_process'
+import {execSync} from 'node:child_process'
 import * as path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { expect } from 'chai'
+import {fileURLToPath} from 'node:url'
+import {expect} from 'chai'
 import fs from 'fs-extra'
 
 const __filename = fileURLToPath(import.meta.url)

@@ -63,7 +63,7 @@ const SESSIONS_DIR = path.join(process.cwd(), '.claude', 'hooks', 'sessions')
 
 export async function ensureSessionsDirectory(): Promise<void> {
   try {
-    await fs.mkdir(SESSIONS_DIR, { recursive: true })
+    await fs.mkdir(SESSIONS_DIR, {recursive: true})
   } catch (error) {
     console.error('Failed to create sessions directory:', error)
   }
@@ -111,7 +111,7 @@ export function runHook(handlers: HookHandlers): void {
             const response = await handlers.preToolUse(payload)
             console.log(JSON.stringify(response))
           } else {
-            console.log(JSON.stringify({ action: 'continue' }))
+            console.log(JSON.stringify({action: 'continue'}))
           }
           break
 
@@ -119,30 +119,30 @@ export function runHook(handlers: HookHandlers): void {
           if (handlers.postToolUse) {
             await handlers.postToolUse(payload)
           }
-          console.log(JSON.stringify({ action: 'continue' }))
+          console.log(JSON.stringify({action: 'continue'}))
           break
 
         case 'Notification':
           if (handlers.notification) {
             await handlers.notification(payload)
           }
-          console.log(JSON.stringify({ action: 'continue' }))
+          console.log(JSON.stringify({action: 'continue'}))
           break
 
         case 'Stop':
           if (handlers.stop) {
             await handlers.stop(payload)
           }
-          console.log(JSON.stringify({ action: 'continue' }))
+          console.log(JSON.stringify({action: 'continue'}))
           process.exit(0)
           break
 
         default:
-          console.log(JSON.stringify({ action: 'continue' }))
+          console.log(JSON.stringify({action: 'continue'}))
       }
     } catch (error) {
       console.error('Hook error:', error)
-      console.log(JSON.stringify({ action: 'continue' }))
+      console.log(JSON.stringify({action: 'continue'}))
     }
   })
 }

@@ -16,7 +16,7 @@
     "ora": "^8.2.0"
   },
   "devDependencies": {
-    "@eslint/compat": "^1",
+    "@biomejs/biome": "2.0.6",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@oclif/prettier-config": "^0.2.1",
     "@oclif/test": "^4",
@@ -25,9 +25,6 @@
     "@types/mocha": "^10",
     "@types/node": "^18",
     "chai": "^4",
-    "eslint": "^9",
-    "eslint-config-oclif": "^6",
-    "eslint-config-prettier": "^10",
     "mocha": "^10",
     "nyc": "^17.1.0",
     "oclif": "^4",
@@ -70,7 +67,9 @@
   "repository": "johnlindquist/claude-hooks",
   "scripts": {
     "build": "shx rm -rf dist && tsc -b",
-    "lint": "eslint",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
+    "format": "biome format --write",
     "postpack": "shx rm -f oclif.manifest.json",
     "posttest": "npm run lint",
     "prepare": "npm run build",

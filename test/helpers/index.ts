@@ -38,7 +38,7 @@ export function expectHooksContent(
     hasStop?: boolean
     hasSecurityPatterns?: boolean
     hasProductionPatterns?: boolean
-  }
+  },
 ): void {
   if (options.hasPreToolUse) {
     expect(content).to.include('function preToolUse')

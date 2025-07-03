@@ -6,3 +6,4 @@ node_modules/
 *.config.js
 *.config.ts
 templates/
+oclif.manifest.json
