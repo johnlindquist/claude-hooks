@@ -1,0 +1,88 @@
+{
+  "name": "claude-hooks",
+  "description": "CLI to initialize Claude Code hooks in your project",
+  "version": "1.0.0",
+  "author": "John Lindquist @johnlindquist",
+  "bin": {
+    "claude-hooks": "./bin/run.js"
+  },
+  "bugs": "https://github.com/johnlindquist/claude-hooks/issues",
+  "dependencies": {
+    "@oclif/core": "^4",
+    "@oclif/plugin-help": "^6",
+    "@oclif/plugin-plugins": "^5",
+    "chalk": "^5.4.1",
+    "fs-extra": "^11.3.0",
+    "ora": "^8.2.0"
+  },
+  "devDependencies": {
+    "@eslint/compat": "^1",
+    "@istanbuljs/nyc-config-typescript": "^1.0.2",
+    "@oclif/prettier-config": "^0.2.1",
+    "@oclif/test": "^4",
+    "@types/chai": "^4",
+    "@types/fs-extra": "^11.0.4",
+    "@types/mocha": "^10",
+    "@types/node": "^18",
+    "chai": "^4",
+    "eslint": "^9",
+    "eslint-config-oclif": "^6",
+    "eslint-config-prettier": "^10",
+    "mocha": "^10",
+    "nyc": "^17.1.0",
+    "oclif": "^4",
+    "shx": "^0.3.3",
+    "ts-node": "^10",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "./bin",
+    "./dist",
+    "./templates",
+    "./oclif.manifest.json"
+  ],
+  "homepage": "https://github.com/johnlindquist/claude-hooks",
+  "keywords": [
+    "oclif",
+    "claude",
+    "claude-code",
+    "hooks",
+    "security",
+    "developer-tools",
+    "cli"
+  ],
+  "license": "MIT",
+  "main": "dist/index.js",
+  "type": "module",
+  "oclif": {
+    "bin": "claude-hooks",
+    "dirname": "claude-hooks",
+    "commands": "./dist/commands",
+    "plugins": [
+      "@oclif/plugin-help",
+      "@oclif/plugin-plugins"
+    ],
+    "topicSeparator": " "
+  },
+  "repository": "johnlindquist/claude-hooks",
+  "scripts": {
+    "build": "shx rm -rf dist && tsc -b",
+    "lint": "eslint",
+    "postpack": "shx rm -f oclif.manifest.json",
+    "posttest": "npm run lint",
+    "prepare": "npm run build",
+    "prepack": "npm run build && oclif manifest && oclif readme",
+    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
+    "test:unit": "mocha --forbid-only \"test/unit/**/*.test.ts\" \"test/commands/**/*.test.ts\"",
+    "test:integration": "mocha --forbid-only \"test/integration/**/*.test.ts\" --timeout 10000",
+    "test:smoke": "mocha --forbid-only \"test/smoke/**/*.test.ts\" --timeout 10000",
+    "test:coverage": "nyc npm test",
+    "clean": "shx rm -rf dist coverage .nyc_output test-*-*/ oclif.manifest.json",
+    "clean:test": "shx rm -rf test-*-*/",
+    "version": "oclif readme && git add README.md"
+  },
+  "types": "dist/index.d.ts"
+}

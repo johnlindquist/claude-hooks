@@ -1,0 +1,8 @@
+dist/
+coverage/
+.nyc_output/
+test-*-*/
+node_modules/
+*.config.js
+*.config.ts
+templates/
