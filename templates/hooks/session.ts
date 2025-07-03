@@ -31,4 +31,3 @@ export async function saveSessionData(hookType: string, payload: any): Promise<v
     console.error('Failed to save session data:', error)
   }
 }
-

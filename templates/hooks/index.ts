@@ -56,4 +56,3 @@ runHook({
   notification,
   stop,
 })
-
