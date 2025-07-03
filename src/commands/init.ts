@@ -84,7 +84,23 @@ This command sets up basic Claude Code hooks in your project:
       console.log(chalk.gray('3. Test your hooks by using Claude Code\n'))
     } catch (error) {
       spinner.fail('Failed to setup hooks')
-      console.error(chalk.red('\nError:'), error)
+
+      // Provide more detailed error messages
+      if (error instanceof Error) {
+        if (error.message.includes('EACCES') || error.message.includes('permission')) {
+          console.error(chalk.red('\n❌ Permission Error:'))
+          console.error(chalk.yellow('   You do not have permission to write to this directory.'))
+          console.error(chalk.gray('   Try running with elevated permissions or check directory ownership.'))
+        } else if (error.message.includes('ENOENT')) {
+          console.error(chalk.red('\n❌ Path Error:'))
+          console.error(chalk.yellow('   Could not find or create the required directories.'))
+        } else {
+          console.error(chalk.red('\n❌ Error:'), error.message)
+        }
+      } else {
+        console.error(chalk.red('\n❌ Unknown error:'), error)
+      }
+
       process.exit(1)
     }
   }
@@ -108,8 +124,12 @@ This command sets up basic Claude Code hooks in your project:
     try {
       const existingSettings = await fs.readFile(settingsPath, 'utf-8')
       settings = JSON.parse(existingSettings)
-    } catch {
-      // File doesn't exist or is invalid
+    } catch (error) {
+      // File doesn't exist or is invalid JSON
+      if (error instanceof Error && error.message.includes('JSON')) {
+        console.log(chalk.yellow('⚠️  Warning: Existing settings.json contains invalid JSON. Creating new settings.'))
+      }
+      // Continue with empty settings object
     }
 
     // Set the hooks configuration with the default structure
