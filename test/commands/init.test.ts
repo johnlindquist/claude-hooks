@@ -1,8 +1,8 @@
-import { execSync } from 'node:child_process'
+import {execSync} from 'node:child_process'
 import * as path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { runCommand } from '@oclif/test'
-import { expect } from 'chai'
+import {fileURLToPath} from 'node:url'
+import {runCommand} from '@oclif/test'
+import {expect} from 'chai'
 import fs from 'fs-extra'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -25,7 +25,7 @@ describe('init', () => {
 
   describe('help', () => {
     it('shows help information', async () => {
-      const { stdout } = await runCommand(['init', '--help'])
+      const {stdout} = await runCommand(['init', '--help'])
       expect(stdout).to.contain('Initialize Claude Code hooks')
       expect(stdout).to.contain('--force')
     })
@@ -169,7 +169,7 @@ describe('init', () => {
           errorOccurred = true
           expect(error.message).to.satisfy(
             (msg: string) =>
-              msg.includes('permission denied') || msg.includes('EACCES') || msg.includes('Failed to setup hooks')
+              msg.includes('permission denied') || msg.includes('EACCES') || msg.includes('Failed to setup hooks'),
           )
         }
 
