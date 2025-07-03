@@ -31,7 +31,7 @@ jobs:
             echo "tag=v$package_version" >> $GITHUB_OUTPUT
           fi
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup git
         if: ${{ steps.version-check.outputs.skipped == 'false' }}
         run: |
@@ -55,5 +55,5 @@ jobs:
           name: ${{ steps.version-check.outputs.tag }}
           tag: ${{ steps.version-check.outputs.tag }}
           commit: ${{ github.ref_name }}
-          token: ${{ secrets.GH_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           skipIfReleaseExists: true
