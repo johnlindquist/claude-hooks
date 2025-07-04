@@ -27,11 +27,11 @@ async function preToolUse(payload: PreToolUsePayload): Promise<HookResponse> {
     const bashInput = payload.tool_input as BashToolInput
     const command = bashInput.command
     console.log(`🚀 Running command: ${command}`)
-    
+
     // Block dangerous commands
     if (command.includes('rm -rf /') || command.includes('rm -rf ~')) {
       console.error('❌ Dangerous command detected! Blocking execution.')
-      return { action: 'reject', message: 'Dangerous command detected' }
+      return {action: 'reject', message: 'Dangerous command detected'}
     }
   }
 

@@ -9,7 +9,11 @@ permissions:
   contents: write
 
 jobs:
+  test-and-lint:
+    uses: ./.github/workflows/test.yml
+    
   release:
+    needs: test-and-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
