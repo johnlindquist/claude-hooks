@@ -25,7 +25,14 @@ async function preToolUse(payload: PreToolUsePayload): Promise<HookResponse> {
   // Example: Track bash commands
   if (payload.tool_name === 'Bash' && payload.tool_input && 'command' in payload.tool_input) {
     const bashInput = payload.tool_input as BashToolInput
-    console.log(`🚀 Running command: ${bashInput.command}`)
+    const command = bashInput.command
+    console.log(`🚀 Running command: ${command}`)
+    
+    // Block dangerous commands
+    if (command.includes('rm -rf /') || command.includes('rm -rf ~')) {
+      console.error('❌ Dangerous command detected! Blocking execution.')
+      return { action: 'reject', message: 'Dangerous command detected' }
+    }
   }
 
   // Add your custom logic here!

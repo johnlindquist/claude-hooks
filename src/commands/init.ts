@@ -80,7 +80,7 @@ This command sets up basic Claude Code hooks in your project:
       // Success message
       console.log(chalk.green('\n✨ Claude Code hooks initialized!\n'))
       console.log(chalk.gray('Next steps:'))
-      console.log(chalk.gray('1. Ensure Bun is installed (see warning above if not)'))
+      console.log(chalk.gray('1. Ensure Bun is installed (Bun is required to run Claude hooks)'))
       console.log(chalk.gray('2. Edit .claude/hooks/index.ts to customize hook behavior'))
       console.log(chalk.gray('3. Test your hooks by using Claude Code\n'))
     } catch (error) {
