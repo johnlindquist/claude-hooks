@@ -3,11 +3,11 @@
 [![Version](https://img.shields.io/npm/v/claude-hooks.svg)](https://npmjs.org/package/claude-hooks)
 [![License](https://img.shields.io/npm/l/claude-hooks.svg)](https://github.com/johnlindquist/claude-hooks/blob/main/LICENSE)
 
-> Simple CLI to initialize Claude Code hooks in your project
+> TypeScript-powered hook system for Claude Code - write hooks with full type safety and auto-completion
 
 ## Overview
 
-`claude-hooks` is a straightforward CLI tool that sets up Claude Code hooks in your project. It creates the necessary files and configuration to intercept and log Claude's tool usage, with basic security protection against dangerous commands.
+`claude-hooks` gives you a powerful, TypeScript-based way to customize Claude Code's behavior. Write hooks with full type safety, auto-completion, and access to strongly-typed payloads - all in familiar TypeScript syntax. No more guessing payload structures or dealing with untyped data!
 
 ## Quick Start
 
@@ -17,9 +17,9 @@ npx claude-hooks
 
 This will:
 - Create `.claude/settings.json` with hook configuration
-- Generate `.claude/hooks/index.ts` with default handlers
-- Set up session logging in system temp directory
-- Create supporting files (lib.ts and session.ts)
+- Generate `.claude/hooks/index.ts` with TypeScript handlers
+- Set up typed payload interfaces for all hook types
+- Create utilities for easy hook development
 
 ## Installation
 
@@ -38,15 +38,16 @@ claude-hooks
 
 ## What It Does
 
-The CLI generates a basic hook setup that:
+The CLI sets up a complete TypeScript development environment for Claude hooks:
 
-1. **Logs all Claude interactions** - Saves session data for all hook types (PreToolUse, PostToolUse, Notification, Stop) to the system temp directory
-2. **Blocks dangerous commands** - Prevents `rm -rf /` and `rm -rf ~` commands
-3. **Creates necessary files**:
+1. **Full TypeScript Support** - Write hooks with complete type safety and IntelliSense
+2. **Typed Payloads** - Access strongly-typed payload data for all hook types (PreToolUse, PostToolUse, Notification, Stop)
+3. **Ready-to-Customize** - Simple, clean TypeScript files ready for your custom logic
+4. **Generated Files**:
    - `.claude/settings.json` - Hook configuration
-   - `.claude/hooks/index.ts` - Hook handlers
-   - `.claude/hooks/lib.ts` - Base utilities and types
-   - `.claude/hooks/session.ts` - Session logging utilities
+   - `.claude/hooks/index.ts` - Your main hook handlers (edit this!)
+   - `.claude/hooks/lib.ts` - Type definitions and utilities
+   - `.claude/hooks/session.ts` - Optional session tracking utilities
 
 ## Generated Structure
 
@@ -63,17 +64,33 @@ Session logs are saved to: `<system-temp-dir>/claude-hooks-sessions/`
 
 ## Customizing Hooks
 
-After running the setup, you can edit `.claude/hooks/index.ts` to add your own logic:
+The real power comes from editing `.claude/hooks/index.ts`. You get full TypeScript support with typed payloads:
 
 ```typescript
-// Example: Block additional dangerous commands
-if (command && command.includes('DROP DATABASE')) {
-  return {
-    action: 'block',
-    stopReason: 'Database drop commands are not allowed'
-  };
+// Example: Track and log specific tool usage
+async function preToolUse(payload: PreToolUsePayload): Promise<HookResponse> {
+  // Full type safety - TypeScript knows exactly what's in the payload!
+  if (payload.tool_name === 'Write' && payload.tool_input) {
+    const { file_path, content } = payload.tool_input as WriteToolInput
+    console.log(`Claude is writing to: ${file_path}`)
+    
+    // Add your custom logic here
+    // Maybe notify a webhook, update a dashboard, etc.
+  }
+  
+  return { action: 'continue' }
+}
+
+// Example: React to completed tasks
+async function postToolUse(payload: PostToolUsePayload): Promise<void> {
+  if (payload.tool_name === 'Bash' && payload.success) {
+    // TypeScript gives you auto-completion for all payload properties!
+    console.log(`Command completed: ${payload.tool_input.command}`)
+  }
 }
 ```
+
+The beauty is that you're writing regular TypeScript - use any npm packages, async/await, or patterns you're familiar with!
 
 ## Command Options
 
