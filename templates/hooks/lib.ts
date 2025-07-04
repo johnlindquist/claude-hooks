@@ -102,13 +102,13 @@ export function log(...args: any[]): void {
 // Main hook runner
 export function runHook(handlers: HookHandlers): void {
   const hook_type = process.argv[2]
-  
+
   process.stdin.on('data', async (data) => {
     try {
       const inputData = JSON.parse(data.toString())
       const payload: HookPayload = {
         ...inputData,
-        hook_type: hook_type as any
+        hook_type: hook_type as any,
       }
 
       switch (hook_type) {
