@@ -101,11 +101,17 @@ export function log(...args: any[]): void {
 
 // Main hook runner
 export function runHook(handlers: HookHandlers): void {
+  const hook_type = process.argv[2]
+  
   process.stdin.on('data', async (data) => {
     try {
-      const payload: HookPayload = JSON.parse(data.toString())
+      const inputData = JSON.parse(data.toString())
+      const payload: HookPayload = {
+        ...inputData,
+        hook_type: hook_type as any
+      }
 
-      switch (payload.hook_type) {
+      switch (hook_type) {
         case 'PreToolUse':
           if (handlers.preToolUse) {
             const response = await handlers.preToolUse(payload)
