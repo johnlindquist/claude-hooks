@@ -42,16 +42,17 @@ This command sets up basic Claude Code hooks in your project:
     console.log(chalk.blue.bold('\n🪝 Claude Hooks Setup\n'))
 
     // Check if Bun is installed
-    try {
-      await fs.access('/usr/bin/bun')
-    } catch {
-      try {
-        await fs.access('/usr/local/bin/bun')
-      } catch {
-        console.log(chalk.yellow('⚠️  Warning: Bun is not installed on your system'))
-        console.log(chalk.gray('   Bun is required to run Claude hooks'))
-        console.log(chalk.gray('   Install it with: curl -fsSL https://bun.sh/install | bash\n'))
-      }
+    const {spawn} = await import('node:child_process')
+    const checkBun = await new Promise<boolean>((resolve) => {
+      const child = spawn('which', ['bun'], {shell: false})
+      child.on('error', () => resolve(false))
+      child.on('exit', (code) => resolve(code === 0))
+    })
+
+    if (!checkBun) {
+      console.log(chalk.yellow('⚠️  Warning: Bun is not installed on your system'))
+      console.log(chalk.gray('   Bun is required to run Claude hooks'))
+      console.log(chalk.gray('   Install it with: curl -fsSL https://bun.sh/install | bash\n'))
     }
 
     // Check if hooks already exist
