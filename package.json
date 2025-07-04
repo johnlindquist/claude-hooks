@@ -1,7 +1,7 @@
 {
   "name": "claude-hooks",
   "description": "CLI to initialize Claude Code hooks in your project",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "author": "John Lindquist @johnlindquist",
   "bin": {
     "claude-hooks": "./bin/run.js"
