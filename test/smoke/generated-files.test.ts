@@ -85,11 +85,11 @@ describe('Smoke Tests - Generated Files', () => {
       expect(indexContent).to.match(/await saveSessionData\('Stop', payload\)/)
     })
 
-    it('should handle dangerous Bash commands', () => {
-      expect(indexContent).to.include("payload.tool_name === 'Bash'")
-      expect(indexContent).to.include("command.includes('rm -rf /')")
-      expect(indexContent).to.include("command.includes('rm -rf ~')")
-      expect(indexContent).to.include('Dangerous command detected')
+    it('should include helpful examples for TypeScript convenience', () => {
+      expect(indexContent).to.include("payload.tool_name === 'Edit'")
+      expect(indexContent).to.include('📝 Claude is editing:')
+      expect(indexContent).to.include('🚀 Running command:')
+      expect(indexContent).to.include('// Add your custom logic here!')
     })
 
     it('should call runHook with all handlers', () => {

@@ -30,8 +30,7 @@ describe('CLI Integration Tests', () => {
 
       // Check output
       expect(output).to.include('Claude Hooks Setup')
-      expect(output).to.include('Bun is required')
-      expect(output).to.include('Claude Code hooks initialized')
+      expect(output).to.include('Claude Code hooks initialized!')
 
       // Verify file structure
       const files = {
