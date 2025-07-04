@@ -45,7 +45,6 @@ This command sets up basic Claude Code hooks in your project:
     const {spawn} = await import('node:child_process')
     const isWindows = process.platform === 'win32'
     const command = isWindows ? 'where' : 'which'
-    
     const checkBun = await new Promise<boolean>((resolve) => {
       const child = spawn(command, ['bun'], {shell: false})
       child.on('error', () => resolve(false))
