@@ -29,3 +29,6 @@ Thumbs.db
 yarn.lock
 pnpm-lock.yaml
 
+# TypeScript build info
+*.tsbuildinfo
+
