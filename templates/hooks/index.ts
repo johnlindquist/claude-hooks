@@ -18,7 +18,7 @@ async function preToolUse(payload: PreToolUsePayload): Promise<HookResponse> {
 
   // Example: Log when Claude is about to edit files
   if (payload.tool_name === 'Edit' && payload.tool_input) {
-    const { file_path } = payload.tool_input as any
+    const {file_path} = payload.tool_input as any
     console.log(`📝 Claude is editing: ${file_path}`)
   }
 
@@ -38,19 +38,19 @@ async function preToolUse(payload: PreToolUsePayload): Promise<HookResponse> {
 async function postToolUse(payload: PostToolUsePayload): Promise<void> {
   // Save session data (optional - remove if not needed)
   await saveSessionData('PostToolUse', payload)
-  
+
   // Example: React to successful file writes
   if (payload.tool_name === 'Write' && payload.success) {
     console.log(`✅ File written successfully!`)
   }
-  
+
   // Add your custom post-processing logic here
 }
 
 // Notification handler - receive Claude's notifications
 async function notification(payload: NotificationPayload): Promise<void> {
   await saveSessionData('Notification', payload)
-  
+
   // Example: Log Claude's progress
   console.log(`🔔 ${payload.message}`)
 }
@@ -58,7 +58,7 @@ async function notification(payload: NotificationPayload): Promise<void> {
 // Stop handler - called when Claude stops
 async function stop(payload: StopPayload): Promise<void> {
   await saveSessionData('Stop', payload)
-  
+
   // Example: Summary or cleanup logic
   console.log(`👋 Session ended: ${payload.reason}`)
 }

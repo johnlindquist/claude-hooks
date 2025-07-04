@@ -97,20 +97,20 @@ describe('init', () => {
       expect(indexContent).to.contain('async function notification')
       expect(indexContent).to.contain('async function stop')
 
-      // Check dangerous command protection
-      expect(indexContent).to.contain('rm -rf /')
-      expect(indexContent).to.contain('rm -rf ~')
+      // Check example functionality
+      expect(indexContent).to.contain('📝 Claude is editing:')
+      expect(indexContent).to.contain('🚀 Running command:')
 
       // Check runHook call
       expect(indexContent).to.contain('runHook({')
     })
 
-    it('shows Bun warning', async () => {
+    it('shows completion message', async () => {
       const output = execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
       })
-      expect(output).to.contain('Bun is required')
+      expect(output).to.contain('Claude Code hooks initialized!')
     })
   })
 
