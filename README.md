@@ -2,6 +2,7 @@
 
 [![Version](https://img.shields.io/npm/v/claude-hooks.svg)](https://npmjs.org/package/claude-hooks)
 [![License](https://img.shields.io/npm/l/claude-hooks.svg)](https://github.com/johnlindquist/claude-hooks/blob/main/LICENSE)
+[![CI](https://github.com/johnlindquist/claude-hooks/actions/workflows/test.yml/badge.svg)](https://github.com/johnlindquist/claude-hooks/actions/workflows/test.yml)
 
 > TypeScript-powered hook system for Claude Code - write hooks with full type safety and auto-completion
 
