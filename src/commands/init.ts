@@ -1,6 +1,6 @@
 import * as path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { Command, Flags } from '@oclif/core'
+import {fileURLToPath} from 'node:url'
+import {Command, Flags} from '@oclif/core'
 import chalk from 'chalk'
 import fs from 'fs-extra'
 import ora from 'ora'
@@ -34,16 +34,16 @@ This command sets up basic Claude Code hooks in your project:
   }
 
   public async run(): Promise<void> {
-    const { flags } = await this.parse(Init)
+    const {flags} = await this.parse(Init)
 
     console.log(chalk.blue.bold('\n🪝 Claude Hooks Setup\n'))
 
     // Check if Bun is installed
-    const { spawn } = await import('node:child_process')
+    const {spawn} = await import('node:child_process')
     const isWindows = process.platform === 'win32'
     const command = isWindows ? 'where' : 'which'
     const checkBun = await new Promise<boolean>((resolve) => {
-      const child = spawn(command, ['bun'], { shell: false })
+      const child = spawn(command, ['bun'], {shell: false})
       child.on('error', () => resolve(false))
       child.on('exit', (code) => resolve(code === 0))
     })
