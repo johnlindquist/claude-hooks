@@ -1,7 +1,12 @@
 {
-  "extends": "../tsconfig",
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "noEmit": true
+    "rootDir": "..",
+    "noImplicitAny": false,
+    "strict": false
   },
-  "references": [{ "path": ".." }]
+  "include": ["**/*.ts"],
+  "ts-node": {
+    "esm": true
+  }
 }
