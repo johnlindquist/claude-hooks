@@ -72,9 +72,9 @@ This command sets up basic Claude Code hooks in your project:
       // Update or create settings.json
       await this.updateSettings()
 
-      // Run bun install to install dependencies
+      // Install required dependencies
       spinner.text = 'Installing dependencies...'
-      await this.runBunInstall()
+      await this.installDependencies()
 
       spinner.succeed('Hooks setup complete!')
 
@@ -89,7 +89,13 @@ This command sets up basic Claude Code hooks in your project:
 
       // Provide more detailed error messages
       if (error instanceof Error) {
-        if (error.message.includes('EACCES') || error.message.includes('permission')) {
+        if (error.message.includes('Bun is not installed')) {
+          console.error(chalk.red('\n❌ Bun Not Found:'))
+          console.error(chalk.yellow('   Bun is required to initialize the hook system.'))
+          console.error(chalk.gray('   Please install Bun first:'))
+          console.error(chalk.cyan('   curl -fsSL https://bun.sh/install | bash'))
+          console.error(chalk.gray('\n   After installing, make sure Bun is in your PATH and run this command again.'))
+        } else if (error.message.includes('EACCES') || error.message.includes('permission')) {
           console.error(chalk.red('\n❌ Permission Error:'))
           console.error(chalk.yellow('   You do not have permission to write to this directory.'))
           console.error(chalk.gray('   Try running with elevated permissions or check directory ownership.'))
@@ -113,22 +119,20 @@ This command sets up basic Claude Code hooks in your project:
     const rootDir = path.join(distDir, '..', '..')
     const templatesDir = path.join(rootDir, 'templates')
 
-    // Copy all hook template files
+    // First, run bun init to create a proper TypeScript project
+    await this.runBunInit()
+
+    // Then copy our hook template files
     await fs.copy(path.join(templatesDir, 'hooks', 'lib.ts'), '.claude/hooks/lib.ts')
     await fs.copy(path.join(templatesDir, 'hooks', 'session.ts'), '.claude/hooks/session.ts')
     await fs.copy(path.join(templatesDir, 'hooks', 'index.ts'), '.claude/hooks/index.ts')
-
-    // Copy TypeScript configuration files
-    await fs.copy(path.join(templatesDir, 'hooks', 'package.json'), '.claude/hooks/package.json')
-    await fs.copy(path.join(templatesDir, 'hooks', 'tsconfig.json'), '.claude/hooks/tsconfig.json')
-    await fs.copy(path.join(templatesDir, 'hooks', '.gitignore'), '.claude/hooks/.gitignore')
   }
 
-  private async runBunInstall(): Promise<void> {
+  private async runBunInit(): Promise<void> {
     const {spawn} = await import('node:child_process')
 
     return new Promise((resolve, reject) => {
-      const child = spawn('bun', ['install'], {
+      const child = spawn('bun', ['init', '-y'], {
         cwd: '.claude/hooks',
         stdio: 'pipe',
         shell: false,
@@ -141,11 +145,46 @@ This command sets up basic Claude Code hooks in your project:
       })
 
       child.on('error', (error) => {
-        // If bun is not installed, we continue anyway
+        if (error.message.includes('ENOENT')) {
+          reject(new Error('Bun is not installed. Please install Bun first: https://bun.sh'))
+        } else {
+          reject(new Error(`Failed to run bun init: ${error.message}`))
+        }
+      })
+
+      child.on('exit', (code) => {
+        if (code === 0) {
+          resolve()
+        } else {
+          reject(new Error(`bun init failed with exit code ${code}: ${_stderr}`))
+        }
+      })
+    })
+  }
+
+  private async installDependencies(): Promise<void> {
+    const {spawn} = await import('node:child_process')
+
+    // Install required type definitions
+    return new Promise((resolve, reject) => {
+      const child = spawn('bun', ['add', '-d', '@types/node'], {
+        cwd: '.claude/hooks',
+        stdio: 'pipe',
+        shell: false,
+      })
+
+      let _stderr = ''
+
+      child.stderr?.on('data', (data) => {
+        _stderr += data.toString()
+      })
+
+      child.on('error', (error) => {
+        // If bun is not installed, we've already warned about it
         if (error.message.includes('ENOENT')) {
           resolve()
         } else {
-          reject(new Error(`Failed to run bun install: ${error.message}`))
+          reject(new Error(`Failed to install dependencies: ${error.message}`))
         }
       })
 
@@ -154,7 +193,7 @@ This command sets up basic Claude Code hooks in your project:
           resolve()
         } else {
           // Non-zero exit code but not a critical failure
-          // User can manually run bun install later
+          // User can manually install dependencies later
           resolve()
         }
       })
