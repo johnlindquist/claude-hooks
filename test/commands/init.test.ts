@@ -29,7 +29,7 @@ describe('init', () => {
         const {stdout} = await runCommand(['init', '--help'])
         expect(stdout).to.contain('Initialize Claude Code hooks')
         expect(stdout).to.contain('--force')
-      } catch (error) {
+      } catch (_error) {
         // Fallback to testing with execSync for compiled version
         const output = execSync(`node ${binPath} init --help`, {encoding: 'utf8'})
         expect(output).to.contain('Initialize Claude Code hooks')
