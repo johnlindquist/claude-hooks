@@ -15,7 +15,7 @@ import {saveSessionData} from './session'
 // PreToolUse handler - called before Claude uses any tool
 async function preToolUse(payload: PreToolUsePayload): Promise<PreToolUseResponse> {
   // Save session data (optional - remove if not needed)
-  await saveSessionData('PreToolUse', payload)
+  await saveSessionData('PreToolUse', {...payload, hook_type: 'PreToolUse'} as const)
 
   // Example: Log when Claude is about to edit files
   if (payload.tool_name === 'Edit' && payload.tool_input) {
@@ -45,7 +45,7 @@ async function preToolUse(payload: PreToolUsePayload): Promise<PreToolUseRespons
 // PostToolUse handler - called after Claude uses a tool
 async function postToolUse(payload: PostToolUsePayload): Promise<void> {
   // Save session data (optional - remove if not needed)
-  await saveSessionData('PostToolUse', payload)
+  await saveSessionData('PostToolUse', {...payload, hook_type: 'PostToolUse'} as const)
 
   // Example: React to successful file writes
   if (payload.tool_name === 'Write' && payload.tool_response) {
@@ -57,7 +57,7 @@ async function postToolUse(payload: PostToolUsePayload): Promise<void> {
 
 // Notification handler - receive Claude's notifications
 async function notification(payload: NotificationPayload): Promise<void> {
-  await saveSessionData('Notification', payload)
+  await saveSessionData('Notification', {...payload, hook_type: 'Notification'} as const)
 
   // Example: Log Claude's progress
   console.log(`🔔 ${payload.message}`)
@@ -65,7 +65,7 @@ async function notification(payload: NotificationPayload): Promise<void> {
 
 // Stop handler - called when Claude stops
 async function stop(payload: StopPayload): Promise<void> {
-  await saveSessionData('Stop', payload)
+  await saveSessionData('Stop', {...payload, hook_type: 'Stop'} as const)
 
   // Example: Summary or cleanup logic
   console.log(`👋 Session ended`)
@@ -73,7 +73,7 @@ async function stop(payload: StopPayload): Promise<void> {
 
 // SubagentStop handler - called when a Claude subagent (Task tool) stops
 async function subagentStop(payload: SubagentStopPayload): Promise<void> {
-  await saveSessionData('SubagentStop', payload)
+  await saveSessionData('SubagentStop', {...payload, hook_type: 'SubagentStop'} as const)
 
   // Example: Log subagent completion
   console.log(`🤖 Subagent task completed`)
