@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
 
 import {
-  type BashToolInput,
   type NotificationPayload,
   type PostToolUsePayload,
   type PreToolUsePayload,
@@ -25,8 +24,7 @@ async function preToolUse(payload: PreToolUsePayload): Promise<PreToolUseRespons
 
   // Example: Track bash commands
   if (payload.tool_name === 'Bash' && payload.tool_input && 'command' in payload.tool_input) {
-    const bashInput = payload.tool_input as BashToolInput
-    const command = bashInput.command
+    const command = (payload.tool_input as {command: string}).command
     console.log(`🚀 Running command: ${command}`)
 
     // Block dangerous commands
