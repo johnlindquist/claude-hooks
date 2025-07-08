@@ -79,10 +79,12 @@ describe('Smoke Tests - Generated Files', () => {
     })
 
     it('should save session data in all handlers', () => {
-      expect(indexContent).to.match(/await saveSessionData\('PreToolUse', payload\)/)
-      expect(indexContent).to.match(/await saveSessionData\('PostToolUse', payload\)/)
-      expect(indexContent).to.match(/await saveSessionData\('Notification', payload\)/)
-      expect(indexContent).to.match(/await saveSessionData\('Stop', payload\)/)
+      expect(indexContent).to.match(/await saveSessionData\('PreToolUse', \{\.\.\.payload, hook_type: 'PreToolUse'\}/)
+      expect(indexContent).to.match(/await saveSessionData\('PostToolUse', \{\.\.\.payload, hook_type: 'PostToolUse'\}/)
+      expect(indexContent).to.match(
+        /await saveSessionData\('Notification', \{\.\.\.payload, hook_type: 'Notification'\}/,
+      )
+      expect(indexContent).to.match(/await saveSessionData\('Stop', \{\.\.\.payload, hook_type: 'Stop'\}/)
     })
 
     it('should include helpful examples for TypeScript convenience', () => {
