@@ -19,7 +19,7 @@ async function preToolUse(payload: PreToolUsePayload): Promise<PreToolUseRespons
 
   // Example: Log when Claude is about to edit files
   if (payload.tool_name === 'Edit' && payload.tool_input) {
-    const {file_path} = payload.tool_input as any
+    const {file_path} = payload.tool_input as {file_path: string}
     console.log(`📝 Claude is editing: ${file_path}`)
   }
 
