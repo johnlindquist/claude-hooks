@@ -10,6 +10,11 @@
 
 `claude-hooks` gives you a powerful, TypeScript-based way to customize Claude Code's behavior. Write hooks with full type safety, auto-completion, and access to strongly-typed payloads - all in familiar TypeScript syntax. No more guessing payload structures or dealing with untyped data!
 
+## Requirements
+
+- [Bun](https://bun.sh) runtime (required for running hooks)
+- Node.js 18+ (for running the CLI)
+
 ## Quick Start
 
 ```bash
