@@ -72,7 +72,9 @@ This command sets up basic Claude Code hooks in your project:
       // Update or create settings.json
       await this.updateSettings()
 
-      // No need to update .gitignore since we're using tmp directory
+      // Run bun install to install dependencies
+      spinner.text = 'Installing dependencies...'
+      await this.runBunInstall()
 
       spinner.succeed('Hooks setup complete!')
 
@@ -115,6 +117,48 @@ This command sets up basic Claude Code hooks in your project:
     await fs.copy(path.join(templatesDir, 'hooks', 'lib.ts'), '.claude/hooks/lib.ts')
     await fs.copy(path.join(templatesDir, 'hooks', 'session.ts'), '.claude/hooks/session.ts')
     await fs.copy(path.join(templatesDir, 'hooks', 'index.ts'), '.claude/hooks/index.ts')
+
+    // Copy TypeScript configuration files
+    await fs.copy(path.join(templatesDir, 'hooks', 'package.json'), '.claude/hooks/package.json')
+    await fs.copy(path.join(templatesDir, 'hooks', 'tsconfig.json'), '.claude/hooks/tsconfig.json')
+    await fs.copy(path.join(templatesDir, 'hooks', '.gitignore'), '.claude/hooks/.gitignore')
+  }
+
+  private async runBunInstall(): Promise<void> {
+    const {spawn} = await import('node:child_process')
+
+    return new Promise((resolve, reject) => {
+      const child = spawn('bun', ['install'], {
+        cwd: '.claude/hooks',
+        stdio: 'pipe',
+        shell: false,
+      })
+
+      let _stderr = ''
+
+      child.stderr?.on('data', (data) => {
+        _stderr += data.toString()
+      })
+
+      child.on('error', (error) => {
+        // If bun is not installed, we continue anyway
+        if (error.message.includes('ENOENT')) {
+          resolve()
+        } else {
+          reject(new Error(`Failed to run bun install: ${error.message}`))
+        }
+      })
+
+      child.on('exit', (code) => {
+        if (code === 0) {
+          resolve()
+        } else {
+          // Non-zero exit code but not a critical failure
+          // User can manually run bun install later
+          resolve()
+        }
+      })
+    })
   }
 
   private async updateSettings(): Promise<void> {
