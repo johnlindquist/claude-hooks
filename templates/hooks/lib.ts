@@ -8,15 +8,15 @@ export interface PreToolUsePayload {
   session_id: string
   transcript_path: string
   tool_name: string
-  tool_input: Record<string, any>
+  tool_input: Record<string, unknown>
 }
 
 export interface PostToolUsePayload {
   session_id: string
   transcript_path: string
   tool_name: string
-  tool_input: Record<string, any>
-  tool_response: Record<string, any> & {
+  tool_input: Record<string, unknown>
+  tool_response: Record<string, unknown> & {
     success?: boolean
   }
 }
@@ -110,12 +110,12 @@ export async function ensureSessionsDirectory(): Promise<void> {
   }
 }
 
-export async function saveSessionData(hookType: string, payload: any): Promise<void> {
+export async function saveSessionData(hookType: string, payload: HookPayload): Promise<void> {
   try {
     const timestamp = new Date().toISOString()
     const sessionFile = path.join(SESSIONS_DIR, `${payload.session_id}.json`)
 
-    let sessionData: any[] = []
+    let sessionData: Array<{timestamp: string; hookType: string; payload: HookPayload}> = []
     try {
       const existing = await fs.readFile(sessionFile, 'utf-8')
       sessionData = JSON.parse(existing)
@@ -136,7 +136,7 @@ export async function saveSessionData(hookType: string, payload: any): Promise<v
 }
 
 // Logging utility
-export function log(...args: any[]): void {
+export function log(...args: unknown[]): void {
   console.log(`[${new Date().toISOString()}]`, ...args)
 }
 
@@ -150,7 +150,7 @@ export function runHook(handlers: HookHandlers): void {
       // Add hook_type for internal processing (not part of official input schema)
       const payload: HookPayload = {
         ...inputData,
-        hook_type: hook_type as any,
+        hook_type: hook_type as HookPayload['hook_type'],
       }
 
       switch (payload.hook_type) {
