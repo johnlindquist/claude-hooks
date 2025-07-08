@@ -117,7 +117,7 @@ This command sets up basic Claude Code hooks in your project:
     await fs.copy(path.join(templatesDir, 'hooks', 'lib.ts'), '.claude/hooks/lib.ts')
     await fs.copy(path.join(templatesDir, 'hooks', 'session.ts'), '.claude/hooks/session.ts')
     await fs.copy(path.join(templatesDir, 'hooks', 'index.ts'), '.claude/hooks/index.ts')
-    
+
     // Copy TypeScript configuration files
     await fs.copy(path.join(templatesDir, 'hooks', 'package.json'), '.claude/hooks/package.json')
     await fs.copy(path.join(templatesDir, 'hooks', 'tsconfig.json'), '.claude/hooks/tsconfig.json')
@@ -126,20 +126,20 @@ This command sets up basic Claude Code hooks in your project:
 
   private async runBunInstall(): Promise<void> {
     const {spawn} = await import('node:child_process')
-    
+
     return new Promise((resolve, reject) => {
       const child = spawn('bun', ['install'], {
         cwd: '.claude/hooks',
         stdio: 'pipe',
         shell: false,
       })
-      
-      let stderr = ''
-      
+
+      let _stderr = ''
+
       child.stderr?.on('data', (data) => {
-        stderr += data.toString()
+        _stderr += data.toString()
       })
-      
+
       child.on('error', (error) => {
         // If bun is not installed, we continue anyway
         if (error.message.includes('ENOENT')) {
@@ -148,7 +148,7 @@ This command sets up basic Claude Code hooks in your project:
           reject(new Error(`Failed to run bun install: ${error.message}`))
         }
       })
-      
+
       child.on('exit', (code) => {
         if (code === 0) {
           resolve()
