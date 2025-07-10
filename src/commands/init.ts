@@ -9,8 +9,8 @@ export default class Init extends Command {
   static description = `Initialize Claude Code hooks in your project
 
 This command sets up basic Claude Code hooks in your project:
-• Creates settings.json with default hook configuration
-• Generates index.ts with session-saving handlers for all hook types
+• Creates settings.json (or settings.json.local with --local flag) with hook configuration
+• Generates index.ts with session-saving handlers for all hook types (including SubagentStop)
 • Creates lib.ts with base utilities for hook management
 • Saves session data to system temp directory`
 
@@ -23,12 +23,21 @@ This command sets up basic Claude Code hooks in your project:
       description: 'Overwrite existing hooks',
       command: '<%= config.bin %> <%= command.id %> --force',
     },
+    {
+      description: 'Create local settings file',
+      command: '<%= config.bin %> <%= command.id %> --local',
+    },
   ]
 
   static flags = {
     force: Flags.boolean({
       char: 'f',
       description: 'Overwrite existing hooks without prompting',
+      helpGroup: 'GLOBAL',
+    }),
+    local: Flags.boolean({
+      char: 'l',
+      description: 'Create settings.json.local instead of settings.json',
       helpGroup: 'GLOBAL',
     }),
   }
@@ -70,7 +79,7 @@ This command sets up basic Claude Code hooks in your project:
       await this.generateHookFiles()
 
       // Update or create settings.json
-      await this.updateSettings()
+      await this.updateSettings(flags.local)
 
       // Install required dependencies
       spinner.text = 'Installing dependencies...'
@@ -80,6 +89,9 @@ This command sets up basic Claude Code hooks in your project:
 
       // Success message
       console.log(chalk.green('\n✨ Claude Code hooks initialized!\n'))
+      if (flags.local) {
+        console.log(chalk.yellow('📝 Created settings.json.local for personal configuration\n'))
+      }
       console.log(chalk.gray('Next steps:'))
       console.log(chalk.gray('1. Ensure Bun is installed (Bun is required to run Claude hooks)'))
       console.log(chalk.gray('2. Edit .claude/hooks/index.ts to customize hook behavior'))
@@ -200,8 +212,8 @@ This command sets up basic Claude Code hooks in your project:
     })
   }
 
-  private async updateSettings(): Promise<void> {
-    const settingsPath = '.claude/settings.json'
+  private async updateSettings(useLocal = false): Promise<void> {
+    const settingsPath = useLocal ? '.claude/settings.json.local' : '.claude/settings.json'
     let settings: any = {}
 
     try {
@@ -257,6 +269,17 @@ This command sets up basic Claude Code hooks in your project:
             {
               type: 'command',
               command: 'bun .claude/hooks/index.ts PostToolUse',
+            },
+          ],
+        },
+      ],
+      SubagentStop: [
+        {
+          matcher: '',
+          hooks: [
+            {
+              type: 'command',
+              command: 'bun .claude/hooks/index.ts SubagentStop',
             },
           ],
         },

@@ -29,11 +29,13 @@ describe('init', () => {
         const {stdout} = await runCommand(['init', '--help'])
         expect(stdout).to.contain('Initialize Claude Code hooks')
         expect(stdout).to.contain('--force')
+        expect(stdout).to.contain('--local')
       } catch (_error) {
         // Fallback to testing with execSync for compiled version
         const output = execSync(`node ${binPath} init --help`, {encoding: 'utf8'})
         expect(output).to.contain('Initialize Claude Code hooks')
         expect(output).to.contain('--force')
+        expect(output).to.contain('--local')
       }
     })
   })
@@ -75,11 +77,18 @@ describe('init', () => {
       expect(settings.hooks).to.have.property('Stop')
       expect(settings.hooks).to.have.property('PreToolUse')
       expect(settings.hooks).to.have.property('PostToolUse')
+      expect(settings.hooks).to.have.property('SubagentStop')
 
       // Check command structure
       expect(settings.hooks.PreToolUse[0].hooks[0]).to.deep.equal({
         type: 'command',
         command: 'bun .claude/hooks/index.ts PreToolUse',
+      })
+
+      // Check SubagentStop command structure
+      expect(settings.hooks.SubagentStop[0].hooks[0]).to.deep.equal({
+        type: 'command',
+        command: 'bun .claude/hooks/index.ts SubagentStop',
       })
     })
 
@@ -151,6 +160,49 @@ describe('init', () => {
 
       expect(output).to.contain('Claude hooks already exist')
       expect(output).to.contain('Use --force to overwrite')
+    })
+  })
+
+  describe('--local flag', () => {
+    it('creates settings.json.local instead of settings.json', async () => {
+      execSync(`node ${binPath} init --local`, {
+        cwd: testDir,
+        encoding: 'utf8',
+      })
+
+      // Check that settings.json.local was created
+      expect(await fs.pathExists(path.join(testDir, '.claude/settings.json.local'))).to.be.true
+      expect(await fs.pathExists(path.join(testDir, '.claude/settings.json'))).to.be.false
+
+      // Verify the content
+      const settings = await fs.readJson(path.join(testDir, '.claude/settings.json.local'))
+      expect(settings.hooks).to.have.property('SubagentStop')
+    })
+
+    it('shows local flag message in output', async () => {
+      const output = execSync(`node ${binPath} init --local`, {
+        cwd: testDir,
+        encoding: 'utf8',
+      })
+
+      expect(output).to.contain('Created settings.json.local for personal configuration')
+    })
+
+    it('works with --force flag', async () => {
+      // Create initial hooks
+      execSync(`node ${binPath} init --local`, {
+        cwd: testDir,
+        encoding: 'utf8',
+      })
+
+      // Force overwrite with local flag
+      const output = execSync(`node ${binPath} init --local --force`, {
+        cwd: testDir,
+        encoding: 'utf8',
+      })
+
+      expect(output).to.contain('Claude Code hooks initialized')
+      expect(output).to.contain('Created settings.json.local for personal configuration')
     })
   })
 
