@@ -1,14 +1,15 @@
 #!/usr/bin/env bun
 
-import {
-  type NotificationPayload,
-  type PostToolUsePayload,
-  type PreToolUsePayload,
-  type PreToolUseResponse,
-  runHook,
-  type StopPayload,
-  type SubagentStopPayload,
+import type {
+  NotificationPayload,
+  PostToolUsePayload,
+  PreToolUsePayload,
+  PreToolUseResponse,
+  StopPayload,
+  SubagentStopPayload,
 } from './lib'
+
+import {runHook} from './lib'
 import {saveSessionData} from './session'
 
 // PreToolUse handler - called before Claude uses any tool
