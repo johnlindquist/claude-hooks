@@ -7,6 +7,7 @@ import * as path from 'node:path'
 export interface PreToolUsePayload {
   session_id: string
   transcript_path: string
+  hook_event_name: 'PreToolUse'
   tool_name: string
   tool_input: Record<string, unknown>
 }
@@ -14,6 +15,7 @@ export interface PreToolUsePayload {
 export interface PostToolUsePayload {
   session_id: string
   transcript_path: string
+  hook_event_name: 'PostToolUse'
   tool_name: string
   tool_input: Record<string, unknown>
   tool_response: Record<string, unknown> & {
@@ -24,19 +26,21 @@ export interface PostToolUsePayload {
 export interface NotificationPayload {
   session_id: string
   transcript_path: string
+  hook_event_name: 'Notification'
   message: string
-  title: string
 }
 
 export interface StopPayload {
   session_id: string
   transcript_path: string
+  hook_event_name: 'Stop'
   stop_hook_active: boolean
 }
 
 export interface SubagentStopPayload {
   session_id: string
   transcript_path: string
+  hook_event_name: 'SubagentStop'
   stop_hook_active: boolean
 }
 
