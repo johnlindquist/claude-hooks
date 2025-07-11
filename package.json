@@ -63,9 +63,7 @@
     "bin": "claude-hooks",
     "dirname": "claude-hooks",
     "commands": "./dist/commands",
-    "plugins": [
-      "@oclif/plugin-help"
-    ],
+    "plugins": [],
     "topicSeparator": " "
   },
   "repository": "johnlindquist/claude-hooks",

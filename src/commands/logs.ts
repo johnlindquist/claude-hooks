@@ -1,31 +1,30 @@
-import {spawn} from 'node:child_process'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import {Command, Flags} from '@oclif/core'
 import chalk from 'chalk'
 import fs from 'fs-extra'
 
-export default class Session extends Command {
-  static description = `Open the latest Claude session log
+export default class Logs extends Command {
+  static description = `Display paths to Claude session logs
 
-Finds and opens Claude hook session logs for debugging and analysis:
-• Opens the most recent session log by default
+Finds and displays paths to Claude hook session logs for debugging and analysis:
+• Shows the path to the most recent session log by default
 • Lists all available sessions with --list flag
-• Opens a specific session by ID with --id flag
+• Shows path to a specific session by ID with --id flag
 • Session logs contain detailed hook execution data and payloads
 • Logs are stored in: <system-temp-dir>/claude-hooks-sessions/`
 
   static examples = [
     {
-      description: 'Open the latest session log',
+      description: 'Show path to the latest session log',
       command: '<%= config.bin %> <%= command.id %>',
     },
     {
-      description: 'List all session files without opening',
+      description: 'List all session files',
       command: '<%= config.bin %> <%= command.id %> --list',
     },
     {
-      description: 'Open a specific session by partial ID',
+      description: 'Show path to a specific session by partial ID',
       command: '<%= config.bin %> <%= command.id %> --id abc123',
     },
   ]
@@ -33,16 +32,16 @@ Finds and opens Claude hook session logs for debugging and analysis:
   static flags = {
     list: Flags.boolean({
       char: 'l',
-      description: 'List all session files without opening',
+      description: 'List all session files',
     }),
     id: Flags.string({
       char: 'i',
-      description: 'Open a specific session by partial ID',
+      description: 'Show a specific session by partial ID',
     }),
   }
 
   public async run(): Promise<void> {
-    const {flags} = await this.parse(Session)
+    const {flags} = await this.parse(Logs)
 
     // Get the sessions directory from temp
     const tempDir = os.tmpdir()
@@ -107,48 +106,6 @@ Finds and opens Claude hook session logs for debugging and analysis:
       targetFile = fileStats[0]
     }
 
-    console.log(chalk.blue(`Opening session: ${targetFile.sessionId}`))
-    console.log(chalk.gray(`Path: ${targetFile.path}`))
-
-    // Open the file with the default system editor
-    await this.openFile(targetFile.path)
-  }
-
-  private async openFile(filePath: string): Promise<void> {
-    const platform = process.platform
-    let command: string
-    let args: string[]
-
-    switch (platform) {
-      case 'darwin': // macOS
-        command = 'open'
-        args = [filePath]
-        break
-      case 'win32': // Windows
-        command = 'cmd'
-        args = ['/c', 'start', '""', filePath]
-        break
-      default: // Linux and others
-        command = 'xdg-open'
-        args = [filePath]
-        break
-    }
-
-    return new Promise((resolve, reject) => {
-      const child = spawn(command, args, {
-        stdio: 'ignore',
-        detached: true,
-      })
-
-      child.on('error', (error) => {
-        console.error(chalk.red('Failed to open file:'), error.message)
-        console.log(chalk.gray('You can manually open the file at:'))
-        console.log(chalk.cyan(filePath))
-        reject(error)
-      })
-
-      child.unref()
-      resolve()
-    })
+    console.log(targetFile.path)
   }
 }
