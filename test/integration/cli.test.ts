@@ -98,7 +98,7 @@ describe('CLI Integration Tests', () => {
         encoding: 'utf8',
       })
 
-      expect(output).to.include('CLI to initialize Claude Code hooks')
+      expect(output).to.include('TypeScript-powered hook system for Claude Code')
       expect(output).to.include('COMMANDS')
       expect(output).to.include('init')
     })
