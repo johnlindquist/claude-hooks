@@ -1,6 +1,6 @@
+import {spawn} from 'node:child_process'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import {spawn} from 'node:child_process'
 import {Command, Flags} from '@oclif/core'
 import chalk from 'chalk'
 import fs from 'fs-extra'
@@ -52,7 +52,7 @@ This command finds and opens the most recent session log file from the system te
 
     // Get all session files
     const files = await fs.readdir(sessionsDir)
-    const sessionFiles = files.filter(f => f.endsWith('.json'))
+    const sessionFiles = files.filter((f) => f.endsWith('.json'))
 
     if (sessionFiles.length === 0) {
       console.log(chalk.yellow('No session logs found.'))
@@ -70,7 +70,7 @@ This command finds and opens the most recent session log file from the system te
           mtime: stat.mtime,
           sessionId: file.replace('.json', ''),
         }
-      })
+      }),
     )
 
     // Sort by modification time (newest first)
@@ -90,11 +90,9 @@ This command finds and opens the most recent session log file from the system te
     }
 
     // Handle id flag
-    let targetFile
+    let targetFile: {file: string; path: string; mtime: Date; sessionId: string} | undefined
     if (flags.id) {
-      targetFile = fileStats.find(stat => 
-        stat.sessionId.toLowerCase().includes(flags.id!.toLowerCase())
-      )
+      targetFile = fileStats.find((stat) => stat.sessionId.toLowerCase().includes(flags.id!.toLowerCase()))
       if (!targetFile) {
         console.log(chalk.red(`No session found matching ID: ${flags.id}`))
         return
