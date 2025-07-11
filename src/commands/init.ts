@@ -8,11 +8,17 @@ import ora from 'ora'
 export default class Init extends Command {
   static description = `Initialize Claude Code hooks in your project
 
-This command sets up basic Claude Code hooks in your project:
+Sets up a TypeScript-powered hook system for Claude Code with full type safety:
 • Creates settings.json (or settings.json.local with --local flag) with hook configuration
-• Generates index.ts with session-saving handlers for all hook types (including SubagentStop)
-• Creates lib.ts with base utilities for hook management
-• Saves session data to system temp directory`
+• Generates index.ts with TypeScript handlers for all hook types (PreToolUse, PostToolUse, Notification, Stop, SubagentStop)
+• Creates lib.ts with strongly-typed payload interfaces and utilities
+• Sets up session.ts for optional session tracking
+• Initializes a Bun project with TypeScript configuration
+• Saves session data to system temp directory
+
+Requirements:
+• Node.js >= 18.0.0
+• Bun runtime (https://bun.sh)`
 
   static examples = [
     {

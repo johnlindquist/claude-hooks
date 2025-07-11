@@ -8,7 +8,12 @@ import fs from 'fs-extra'
 export default class Session extends Command {
   static description = `Open the latest Claude session log
 
-This command finds and opens the most recent session log file from the system temp directory.`
+Finds and opens Claude hook session logs for debugging and analysis:
+• Opens the most recent session log by default
+• Lists all available sessions with --list flag
+• Opens a specific session by ID with --id flag
+• Session logs contain detailed hook execution data and payloads
+• Logs are stored in: <system-temp-dir>/claude-hooks-sessions/`
 
   static examples = [
     {
