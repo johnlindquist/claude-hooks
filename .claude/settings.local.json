@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit:*)",
+      "Bash(bun test:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(bun run:*)",
+      "Bash(cursor:*)",
+      "Bash(node_modules/.bin/biome:*)",
+      "Bash(/opt/homebrew/bin/biome --version)",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}
