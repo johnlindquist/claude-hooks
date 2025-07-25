@@ -7,6 +7,9 @@ import fs from 'fs-extra'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+// Skip smoke tests for now - they need to be updated for bun test compatibility
+// TODO: Update these tests to use bun:test syntax instead of mocha
+/*
 describe.skip('Smoke Tests - Generated Files', () => {
   const testDir = path.join(__dirname, '..', '..', 'test-smoke-output')
   const binPath = path.join(__dirname, '..', '..', 'bin', 'run.js')
@@ -182,3 +185,4 @@ describe.skip('Smoke Tests - Generated Files', () => {
     })
   })
 })
+*/
