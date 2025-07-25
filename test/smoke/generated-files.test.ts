@@ -37,7 +37,7 @@ describe.skip('Smoke Tests - Generated Files', () => {
       expect(settings.hooks).to.be.an('object')
 
       // Check hook structure
-      const hookTypes = ['Notification', 'Stop', 'PreToolUse', 'PostToolUse']
+      const hookTypes = ['Notification', 'Stop', 'PreToolUse', 'PostToolUse', 'SubagentStop', 'UserPromptSubmit', 'PreCompact']
       for (const hookType of hookTypes) {
         expect(settings.hooks[hookType]).to.be.an('array')
         expect(settings.hooks[hookType][0]).to.have.property('matcher', '')
@@ -77,6 +77,9 @@ describe.skip('Smoke Tests - Generated Files', () => {
       expect(indexContent).to.match(/async\s+function\s+postToolUse/)
       expect(indexContent).to.match(/async\s+function\s+notification/)
       expect(indexContent).to.match(/async\s+function\s+stop/)
+      expect(indexContent).to.match(/async\s+function\s+subagentStop/)
+      expect(indexContent).to.match(/async\s+function\s+userPromptSubmit/)
+      expect(indexContent).to.match(/async\s+function\s+preCompact/)
     })
 
     it('should save session data in all handlers', () => {
@@ -86,12 +89,17 @@ describe.skip('Smoke Tests - Generated Files', () => {
         /await saveSessionData\('Notification', \{\.\.\.payload, hook_type: 'Notification'\}/,
       )
       expect(indexContent).to.match(/await saveSessionData\('Stop', \{\.\.\.payload, hook_type: 'Stop'\}/)
+      expect(indexContent).to.match(/await saveSessionData\('SubagentStop', \{\.\.\.payload, hook_type: 'SubagentStop'\}/)
+      expect(indexContent).to.match(/await saveSessionData\('UserPromptSubmit', \{\.\.\.payload, hook_type: 'UserPromptSubmit'\}/)
+      expect(indexContent).to.match(/await saveSessionData\('PreCompact', \{\.\.\.payload, hook_type: 'PreCompact'\}/)
     })
 
     it('should include helpful examples for TypeScript convenience', () => {
       expect(indexContent).to.include("payload.tool_name === 'Edit'")
       expect(indexContent).to.include('📝 Claude is editing:')
       expect(indexContent).to.include('🚀 Running command:')
+      expect(indexContent).to.include('💬 User prompt:')
+      expect(indexContent).to.include('🗜️  Compact triggered:')
       expect(indexContent).to.include('// Add your custom logic here!')
     })
 
@@ -101,6 +109,9 @@ describe.skip('Smoke Tests - Generated Files', () => {
       expect(indexContent).to.include('postToolUse,')
       expect(indexContent).to.include('notification,')
       expect(indexContent).to.include('stop')
+      expect(indexContent).to.include('subagentStop')
+      expect(indexContent).to.include('userPromptSubmit')
+      expect(indexContent).to.include('preCompact')
     })
   })
 
@@ -117,6 +128,9 @@ describe.skip('Smoke Tests - Generated Files', () => {
       expect(libContent).to.include('export interface PostToolUsePayload')
       expect(libContent).to.include('export interface NotificationPayload')
       expect(libContent).to.include('export interface StopPayload')
+      expect(libContent).to.include('export interface SubagentStopPayload')
+      expect(libContent).to.include('export interface UserPromptSubmitPayload')
+      expect(libContent).to.include('export interface PreCompactPayload')
       expect(libContent).to.include('export interface HookResponse')
       expect(libContent).to.include('export interface BashToolInput')
     })
