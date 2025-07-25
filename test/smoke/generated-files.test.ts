@@ -3,6 +3,7 @@ import * as path from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {expect} from 'chai'
 import fs from 'fs-extra'
+import {beforeAll, afterAll, describe, it} from 'bun:test'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -11,7 +12,7 @@ describe.skip('Smoke Tests - Generated Files', () => {
   const testDir = path.join(__dirname, '..', '..', 'test-smoke-output')
   const binPath = path.join(__dirname, '..', '..', 'bin', 'run.js')
 
-  before(async () => {
+  beforeAll(async () => {
     // Set up once for all smoke tests
     await fs.remove(testDir)
     await fs.ensureDir(testDir)
@@ -23,7 +24,7 @@ describe.skip('Smoke Tests - Generated Files', () => {
     })
   })
 
-  after(async () => {
+  afterAll(async () => {
     await fs.remove(testDir)
   })
 
@@ -51,7 +52,7 @@ describe.skip('Smoke Tests - Generated Files', () => {
   describe('index.ts', () => {
     let indexContent: string
 
-    before(async () => {
+    beforeAll(async () => {
       const indexPath = path.join(testDir, '.claude/hooks/index.ts')
       indexContent = await fs.readFile(indexPath, 'utf8')
     })
@@ -106,7 +107,7 @@ describe.skip('Smoke Tests - Generated Files', () => {
   describe('lib.ts', () => {
     let libContent: string
 
-    before(async () => {
+    beforeAll(async () => {
       const libPath = path.join(testDir, '.claude/hooks/lib.ts')
       libContent = await fs.readFile(libPath, 'utf8')
     })
