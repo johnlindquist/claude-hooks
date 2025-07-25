@@ -10,7 +10,7 @@ export default class Init extends Command {
 
 Sets up a TypeScript-powered hook system for Claude Code with full type safety:
 • Creates settings.json (or settings.json.local with --local flag) with hook configuration
-• Generates index.ts with TypeScript handlers for all hook types (PreToolUse, PostToolUse, Notification, Stop, SubagentStop)
+• Generates index.ts with TypeScript handlers for all hook types (PreToolUse, PostToolUse, Notification, Stop, SubagentStop, UserPromptSubmit, PreCompact)
 • Creates lib.ts with strongly-typed payload interfaces and utilities
 • Sets up session.ts for optional session tracking
 • Initializes a Bun project with TypeScript configuration
@@ -286,6 +286,28 @@ Requirements:
             {
               type: 'command',
               command: 'bun .claude/hooks/index.ts SubagentStop',
+            },
+          ],
+        },
+      ],
+      UserPromptSubmit: [
+        {
+          matcher: '',
+          hooks: [
+            {
+              type: 'command',
+              command: 'bun .claude/hooks/index.ts UserPromptSubmit',
+            },
+          ],
+        },
+      ],
+      PreCompact: [
+        {
+          matcher: '',
+          hooks: [
+            {
+              type: 'command',
+              command: 'bun .claude/hooks/index.ts PreCompact',
             },
           ],
         },

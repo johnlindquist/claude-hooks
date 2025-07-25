@@ -3,10 +3,14 @@
 import type {
   NotificationPayload,
   PostToolUsePayload,
+  PreCompactPayload,
+  PreCompactResponse,
   PreToolUsePayload,
   PreToolUseResponse,
   StopPayload,
   SubagentStopPayload,
+  UserPromptSubmitPayload,
+  UserPromptSubmitResponse,
 } from './lib'
 
 import {runHook} from './lib'
@@ -84,6 +88,51 @@ async function subagentStop(payload: SubagentStopPayload): Promise<void> {
   }
 }
 
+// UserPromptSubmit handler - called when the user submits a prompt
+async function userPromptSubmit(payload: UserPromptSubmitPayload): Promise<UserPromptSubmitResponse> {
+  await saveSessionData('UserPromptSubmit', {...payload, hook_type: 'UserPromptSubmit'} as const)
+
+  // Example: Log user prompts
+  console.log(`💬 User prompt: ${payload.prompt}`)
+
+  // Example: Add context files automatically based on prompt content
+  const contextFiles: string[] = []
+  if (payload.prompt.toLowerCase().includes('test')) {
+    // Automatically include test files when user mentions testing
+    contextFiles.push('**/*.test.ts', '**/*.test.js')
+    console.log('📁 Auto-adding test files to context')
+  }
+
+  // Example: Validate or modify prompts
+  if (payload.prompt.includes('delete all')) {
+    console.error('⚠️  Dangerous prompt detected! Blocking.')
+    return {decision: 'block', reason: 'Prompts containing "delete all" are not allowed'}
+  }
+
+  // Add your custom prompt processing logic here
+
+  return contextFiles.length > 0 ? {contextFiles} : {}
+}
+
+// PreCompact handler - called before Claude compacts the conversation
+async function preCompact(payload: PreCompactPayload): Promise<PreCompactResponse> {
+  await saveSessionData('PreCompact', {...payload, hook_type: 'PreCompact'} as const)
+
+  // Example: Log compact events
+  console.log(`🗜️  Compact triggered: ${payload.trigger}`)
+
+  // Example: Block automatic compaction during critical operations
+  if (payload.trigger === 'auto') {
+    // You could check if critical operations are in progress
+    // For now, we'll allow all compactions
+    console.log('📋 Allowing automatic compaction')
+  }
+
+  // Add your custom compaction logic here
+
+  return {} // Empty object means allow compaction
+}
+
 // Run the hook with our handlers
 runHook({
   preToolUse,
@@ -91,4 +140,6 @@ runHook({
   notification,
   stop,
   subagentStop,
+  userPromptSubmit,
+  preCompact,
 })
