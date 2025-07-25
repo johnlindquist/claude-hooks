@@ -44,12 +44,28 @@ export interface SubagentStopPayload {
   stop_hook_active: boolean
 }
 
+export interface UserPromptSubmitPayload {
+  session_id: string
+  transcript_path: string
+  hook_event_name: 'UserPromptSubmit'
+  prompt: string
+}
+
+export interface PreCompactPayload {
+  session_id: string
+  transcript_path: string
+  hook_event_name: 'PreCompact'
+  trigger: 'manual' | 'auto'
+}
+
 export type HookPayload =
   | (PreToolUsePayload & {hook_type: 'PreToolUse'})
   | (PostToolUsePayload & {hook_type: 'PostToolUse'})
   | (NotificationPayload & {hook_type: 'Notification'})
   | (StopPayload & {hook_type: 'Stop'})
   | (SubagentStopPayload & {hook_type: 'SubagentStop'})
+  | (UserPromptSubmitPayload & {hook_type: 'UserPromptSubmit'})
+  | (PreCompactPayload & {hook_type: 'PreCompact'})
 
 // Base response fields available to all hooks
 export interface BaseHookResponse {
@@ -76,6 +92,20 @@ export interface StopResponse extends BaseHookResponse {
   reason?: string // Required when decision is 'block'
 }
 
+// UserPromptSubmit specific response
+export interface UserPromptSubmitResponse extends BaseHookResponse {
+  decision?: 'approve' | 'block'
+  reason?: string
+  contextFiles?: string[]
+  updatedPrompt?: string
+}
+
+// PreCompact specific response
+export interface PreCompactResponse extends BaseHookResponse {
+  decision?: 'approve' | 'block'
+  reason?: string
+}
+
 // Legacy simple response for backward compatibility
 export interface HookResponse {
   action: 'continue' | 'block'
@@ -94,6 +124,8 @@ export type PostToolUseHandler = (payload: PostToolUsePayload) => Promise<void> 
 export type NotificationHandler = (payload: NotificationPayload) => Promise<void> | void
 export type StopHandler = (payload: StopPayload) => Promise<void> | void
 export type SubagentStopHandler = (payload: SubagentStopPayload) => Promise<void> | void
+export type UserPromptSubmitHandler = (payload: UserPromptSubmitPayload) => Promise<UserPromptSubmitResponse> | UserPromptSubmitResponse
+export type PreCompactHandler = (payload: PreCompactPayload) => Promise<PreCompactResponse> | PreCompactResponse
 
 export interface HookHandlers {
   preToolUse?: PreToolUseHandler
@@ -101,6 +133,8 @@ export interface HookHandlers {
   notification?: NotificationHandler
   stop?: StopHandler
   subagentStop?: SubagentStopHandler
+  userPromptSubmit?: UserPromptSubmitHandler
+  preCompact?: PreCompactHandler
 }
 
 // Session management utilities
@@ -196,6 +230,24 @@ export function runHook(handlers: HookHandlers): void {
           console.log(JSON.stringify({}))
           process.exit(0)
           return // Unreachable but satisfies linter
+
+        case 'UserPromptSubmit':
+          if (handlers.userPromptSubmit) {
+            const response = await handlers.userPromptSubmit(payload)
+            console.log(JSON.stringify(response))
+          } else {
+            console.log(JSON.stringify({}))
+          }
+          break
+
+        case 'PreCompact':
+          if (handlers.preCompact) {
+            const response = await handlers.preCompact(payload)
+            console.log(JSON.stringify(response))
+          } else {
+            console.log(JSON.stringify({}))
+          }
+          break
 
         default:
           console.log(JSON.stringify({}))
