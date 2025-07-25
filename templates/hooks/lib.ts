@@ -124,7 +124,9 @@ export type PostToolUseHandler = (payload: PostToolUsePayload) => Promise<void> 
 export type NotificationHandler = (payload: NotificationPayload) => Promise<void> | void
 export type StopHandler = (payload: StopPayload) => Promise<void> | void
 export type SubagentStopHandler = (payload: SubagentStopPayload) => Promise<void> | void
-export type UserPromptSubmitHandler = (payload: UserPromptSubmitPayload) => Promise<UserPromptSubmitResponse> | UserPromptSubmitResponse
+export type UserPromptSubmitHandler = (
+  payload: UserPromptSubmitPayload,
+) => Promise<UserPromptSubmitResponse> | UserPromptSubmitResponse
 export type PreCompactHandler = (payload: PreCompactPayload) => Promise<PreCompactResponse> | PreCompactResponse
 
 export interface HookHandlers {

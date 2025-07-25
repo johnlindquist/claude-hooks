@@ -36,7 +36,15 @@ describe.skip('Smoke Tests - Generated Files', () => {
       expect(settings.hooks).to.be.an('object')
 
       // Check hook structure
-      const hookTypes = ['Notification', 'Stop', 'PreToolUse', 'PostToolUse', 'SubagentStop', 'UserPromptSubmit', 'PreCompact']
+      const hookTypes = [
+        'Notification',
+        'Stop',
+        'PreToolUse',
+        'PostToolUse',
+        'SubagentStop',
+        'UserPromptSubmit',
+        'PreCompact',
+      ]
       for (const hookType of hookTypes) {
         expect(settings.hooks[hookType]).to.be.an('array')
         expect(settings.hooks[hookType][0]).to.have.property('matcher', '')
@@ -88,8 +96,12 @@ describe.skip('Smoke Tests - Generated Files', () => {
         /await saveSessionData\('Notification', \{\.\.\.payload, hook_type: 'Notification'\}/,
       )
       expect(indexContent).to.match(/await saveSessionData\('Stop', \{\.\.\.payload, hook_type: 'Stop'\}/)
-      expect(indexContent).to.match(/await saveSessionData\('SubagentStop', \{\.\.\.payload, hook_type: 'SubagentStop'\}/)
-      expect(indexContent).to.match(/await saveSessionData\('UserPromptSubmit', \{\.\.\.payload, hook_type: 'UserPromptSubmit'\}/)
+      expect(indexContent).to.match(
+        /await saveSessionData\('SubagentStop', \{\.\.\.payload, hook_type: 'SubagentStop'\}/,
+      )
+      expect(indexContent).to.match(
+        /await saveSessionData\('UserPromptSubmit', \{\.\.\.payload, hook_type: 'UserPromptSubmit'\}/,
+      )
       expect(indexContent).to.match(/await saveSessionData\('PreCompact', \{\.\.\.payload, hook_type: 'PreCompact'\}/)
     })
 
