@@ -78,6 +78,8 @@ describe('init', () => {
       expect(settings.hooks).to.have.property('PreToolUse')
       expect(settings.hooks).to.have.property('PostToolUse')
       expect(settings.hooks).to.have.property('SubagentStop')
+      expect(settings.hooks).to.have.property('UserPromptSubmit')
+      expect(settings.hooks).to.have.property('PreCompact')
 
       // Check command structure
       expect(settings.hooks.PreToolUse[0].hooks[0]).to.deep.equal({
@@ -89,6 +91,18 @@ describe('init', () => {
       expect(settings.hooks.SubagentStop[0].hooks[0]).to.deep.equal({
         type: 'command',
         command: 'bun .claude/hooks/index.ts SubagentStop',
+      })
+
+      // Check UserPromptSubmit command structure
+      expect(settings.hooks.UserPromptSubmit[0].hooks[0]).to.deep.equal({
+        type: 'command',
+        command: 'bun .claude/hooks/index.ts UserPromptSubmit',
+      })
+
+      // Check PreCompact command structure
+      expect(settings.hooks.PreCompact[0].hooks[0]).to.deep.equal({
+        type: 'command',
+        command: 'bun .claude/hooks/index.ts PreCompact',
       })
     })
 
@@ -112,10 +126,15 @@ describe('init', () => {
       expect(indexContent).to.contain('async function postToolUse')
       expect(indexContent).to.contain('async function notification')
       expect(indexContent).to.contain('async function stop')
+      expect(indexContent).to.contain('async function subagentStop')
+      expect(indexContent).to.contain('async function userPromptSubmit')
+      expect(indexContent).to.contain('async function preCompact')
 
       // Check example functionality
       expect(indexContent).to.contain('📝 Claude is editing:')
       expect(indexContent).to.contain('🚀 Running command:')
+      expect(indexContent).to.contain('💬 User prompt:')
+      expect(indexContent).to.contain('🗜️  Compact triggered:')
 
       // Check runHook call
       expect(indexContent).to.contain('runHook({')
@@ -177,6 +196,8 @@ describe('init', () => {
       // Verify the content
       const settings = await fs.readJson(path.join(testDir, '.claude/settings.json.local'))
       expect(settings.hooks).to.have.property('SubagentStop')
+      expect(settings.hooks).to.have.property('UserPromptSubmit')
+      expect(settings.hooks).to.have.property('PreCompact')
     })
 
     it('shows local flag message in output', async () => {
