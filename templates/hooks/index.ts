@@ -1,16 +1,16 @@
 #!/usr/bin/env bun
 
 import type {
-  PreToolUseHandler,
-  PostToolUseHandler,
   NotificationHandler,
+  PostToolUseHandler,
+  PreCompactHandler,
+  PreToolUseHandler,
   StopHandler,
   SubagentStopHandler,
   UserPromptSubmitHandler,
-  PreCompactHandler,
 } from './lib'
 import {runHook} from './lib'
-import {saveSessionData, getSessionsDirectory} from './session'
+import {getSessionsDirectory, saveSessionData} from './session'
 
 // Check for --session-dir flag
 const args = process.argv.slice(2)
