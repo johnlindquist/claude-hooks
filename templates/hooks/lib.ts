@@ -1,8 +1,5 @@
 #!/usr/bin/env bun
 
-import * as fs from 'node:fs/promises'
-import * as path from 'node:path'
-
 // Input payload types based on official Claude Code schemas
 export interface PreToolUsePayload {
   session_id: string
