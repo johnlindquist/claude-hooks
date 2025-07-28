@@ -5,11 +5,13 @@ import * as path from 'node:path'
 import type {
   NotificationPayload,
   PostToolUsePayload,
+  PostToolUseResponse,
   PreCompactPayload,
   PreCompactResponse,
   PreToolUsePayload,
   PreToolUseResponse,
   StopPayload,
+  StopResponse,
   SubagentStopPayload,
   UserPromptSubmitPayload,
   UserPromptSubmitResponse,
@@ -44,7 +46,10 @@ async function preToolUse(payload: PreToolUsePayload): Promise<PreToolUseRespons
     // Block dangerous commands
     if (command.includes('rm -rf /') || command.includes('rm -rf ~')) {
       console.error('❌ Dangerous command detected! Blocking execution.')
-      return {decision: 'block', reason: `Dangerous command detected: ${command}`}
+      return {
+        permissionDecision: 'deny',
+        permissionDecisionReason: `Dangerous command detected: ${command}`
+      }
     }
   }
 
@@ -55,7 +60,7 @@ async function preToolUse(payload: PreToolUsePayload): Promise<PreToolUseRespons
 }
 
 // PostToolUse handler - called after Claude uses a tool
-async function postToolUse(payload: PostToolUsePayload): Promise<void> {
+async function postToolUse(payload: PostToolUsePayload): Promise<PostToolUseResponse> {
   // Save session data (optional - remove if not needed)
   await saveSessionData('PostToolUse', {...payload, hook_type: 'PostToolUse'} as const)
 
@@ -65,26 +70,32 @@ async function postToolUse(payload: PostToolUsePayload): Promise<void> {
   }
 
   // Add your custom post-processing logic here
+  
+  return {} // Return empty object to continue normally
 }
 
 // Notification handler - receive Claude's notifications
-async function notification(payload: NotificationPayload): Promise<void> {
+async function notification(payload: NotificationPayload): Promise<BaseHookResponse> {
   await saveSessionData('Notification', {...payload, hook_type: 'Notification'} as const)
 
   // Example: Log Claude's progress
   console.log(`🔔 ${payload.message}`)
+  
+  return {} // Return empty object to continue normally
 }
 
 // Stop handler - called when Claude stops
-async function stop(payload: StopPayload): Promise<void> {
+async function stop(payload: StopPayload): Promise<StopResponse> {
   await saveSessionData('Stop', {...payload, hook_type: 'Stop'} as const)
 
   // Example: Summary or cleanup logic
   console.log(`👋 Session ended`)
+  
+  return {} // Return empty object to continue normally
 }
 
 // SubagentStop handler - called when a Claude subagent (Task tool) stops
-async function subagentStop(payload: SubagentStopPayload): Promise<void> {
+async function subagentStop(payload: SubagentStopPayload): Promise<StopResponse> {
   await saveSessionData('SubagentStop', {...payload, hook_type: 'SubagentStop'} as const)
 
   // Example: Log subagent completion
@@ -95,6 +106,8 @@ async function subagentStop(payload: SubagentStopPayload): Promise<void> {
   if (payload.stop_hook_active) {
     console.log('⚠️  Stop hook is already active, skipping additional processing')
   }
+  
+  return {} // Return empty object to continue normally
 }
 
 // UserPromptSubmit handler - called when the user submits a prompt
