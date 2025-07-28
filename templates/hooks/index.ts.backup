@@ -53,7 +53,11 @@ const preToolUse: PreToolUseHandler = async (payload) => {
 }
 
 // PostToolUse handler - called after Claude uses a tool
+<<<<<<< HEAD
 const postToolUse: PostToolUseHandler = async (payload) => {
+=======
+async function postToolUse(payload: PostToolUsePayload): Promise<PostToolUseResponse> {
+>>>>>>> origin/main
   // Save session data (optional - remove if not needed)
   await saveSessionData('PostToolUse', {...payload, hook_type: 'PostToolUse'} as const)
 
@@ -68,7 +72,11 @@ const postToolUse: PostToolUseHandler = async (payload) => {
 }
 
 // Notification handler - receive Claude's notifications
+<<<<<<< HEAD
 const notification: NotificationHandler = async (payload) => {
+=======
+async function notification(payload: NotificationPayload): Promise<BaseHookResponse> {
+>>>>>>> origin/main
   await saveSessionData('Notification', {...payload, hook_type: 'Notification'} as const)
 
   // Example: Log Claude's progress
@@ -78,7 +86,11 @@ const notification: NotificationHandler = async (payload) => {
 }
 
 // Stop handler - called when Claude stops
+<<<<<<< HEAD
 const stop: StopHandler = async (payload) => {
+=======
+async function stop(payload: StopPayload): Promise<StopResponse> {
+>>>>>>> origin/main
   await saveSessionData('Stop', {...payload, hook_type: 'Stop'} as const)
 
   // Example: Summary or cleanup logic
@@ -88,7 +100,11 @@ const stop: StopHandler = async (payload) => {
 }
 
 // SubagentStop handler - called when a Claude subagent (Task tool) stops
+<<<<<<< HEAD
 const subagentStop: SubagentStopHandler = async (payload) => {
+=======
+async function subagentStop(payload: SubagentStopPayload): Promise<StopResponse> {
+>>>>>>> origin/main
   await saveSessionData('SubagentStop', {...payload, hook_type: 'SubagentStop'} as const)
 
   // Example: Log subagent completion

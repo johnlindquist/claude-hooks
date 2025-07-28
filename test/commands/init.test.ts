@@ -122,13 +122,13 @@ describe('init', () => {
       expect(indexContent).to.contain("from './session'")
 
       // Check handler functions
-      expect(indexContent).to.contain('async function preToolUse')
-      expect(indexContent).to.contain('async function postToolUse')
-      expect(indexContent).to.contain('async function notification')
-      expect(indexContent).to.contain('async function stop')
-      expect(indexContent).to.contain('async function subagentStop')
-      expect(indexContent).to.contain('async function userPromptSubmit')
-      expect(indexContent).to.contain('async function preCompact')
+      expect(indexContent).to.contain('const preToolUse: PreToolUseHandler')
+      expect(indexContent).to.contain('const postToolUse: PostToolUseHandler')
+      expect(indexContent).to.contain('const notification: NotificationHandler')
+      expect(indexContent).to.contain('const stop: StopHandler')
+      expect(indexContent).to.contain('const subagentStop: SubagentStopHandler')
+      expect(indexContent).to.contain('const userPromptSubmit: UserPromptSubmitHandler')
+      expect(indexContent).to.contain('const preCompact: PreCompactHandler')
 
       // Check example functionality
       expect(indexContent).to.contain('📝 Claude is editing:')
