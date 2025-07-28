@@ -3,6 +3,7 @@ import {fileURLToPath} from 'node:url'
 import {Command, Flags} from '@oclif/core'
 import chalk from 'chalk'
 import fs from 'fs-extra'
+import inquirer from 'inquirer'
 import ora from 'ora'
 
 export default class Init extends Command {
@@ -70,9 +71,28 @@ Requirements:
     }
 
     // Check if hooks already exist
-    if (!flags.force && (await fs.pathExists('.claude/hooks/index.ts'))) {
+    const indexPath = '.claude/hooks/index.ts'
+    const hooksExist = await fs.pathExists(indexPath)
+
+    if (hooksExist && !flags.force) {
       console.log(chalk.yellow('Claude hooks already exist. Use --force to overwrite.'))
       return
+    }
+
+    // If using --force and hooks exist, prompt for backup
+    if (hooksExist && flags.force) {
+      const {shouldBackup} = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'shouldBackup',
+          message: 'Would you like to backup your existing index.ts customizations?',
+          default: true,
+        },
+      ])
+
+      if (shouldBackup) {
+        await this.backupIndexFile(indexPath)
+      }
     }
 
     const spinner = ora('Setting up claude hooks...').start()
@@ -128,6 +148,19 @@ Requirements:
       }
 
       process.exit(1)
+    }
+  }
+
+  private async backupIndexFile(indexPath: string): Promise<void> {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
+    const backupPath = `.claude/hooks/index.backup.${timestamp}.ts`
+
+    try {
+      await fs.copy(indexPath, backupPath)
+      console.log(chalk.green(`✅ Backed up existing index.ts to ${backupPath}`))
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to backup index.ts:'), error)
+      throw error
     }
   }
 

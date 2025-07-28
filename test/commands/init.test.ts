@@ -150,20 +150,21 @@ describe('init', () => {
   })
 
   describe('force flag', () => {
-    it('overwrites existing files without prompting', async () => {
+    it('overwrites existing files with prompt', async () => {
       execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
       })
 
+      // Provide input to decline backup
       const output = execSync(`node ${binPath} init --force`, {
         cwd: testDir,
         encoding: 'utf8',
+        input: 'n\n',
       })
 
       expect(output).to.contain('Claude Hooks Setup')
       expect(output).to.contain('Claude Code hooks initialized')
-      expect(output).not.to.contain('already exist')
     })
 
     it('warns about existing hooks without force flag', async () => {
@@ -179,6 +180,65 @@ describe('init', () => {
 
       expect(output).to.contain('Claude hooks already exist')
       expect(output).to.contain('Use --force to overwrite')
+    })
+
+    it('prompts for backup when using --force with existing hooks', async () => {
+      // First init to create hooks
+      execSync(`node ${binPath} init`, {
+        cwd: testDir,
+        encoding: 'utf8',
+      })
+
+      // Modify index.ts to simulate customizations
+      const indexPath = path.join(testDir, '.claude/hooks/index.ts')
+      const customContent = '// My custom hooks\nconsole.log("Custom code")\n'
+      await fs.writeFile(indexPath, customContent)
+
+      // Run init with --force, simulating "y" response for backup
+      const output = execSync(`node ${binPath} init --force`, {
+        cwd: testDir,
+        encoding: 'utf8',
+        input: 'y\n',
+      })
+
+      expect(output).to.contain('Would you like to backup your existing index.ts customizations?')
+      expect(output).to.contain('Backed up existing index.ts to')
+
+      // Check that backup file was created
+      const hooksDir = path.join(testDir, '.claude/hooks')
+      const files = await fs.readdir(hooksDir)
+      const backupFile = files.find((f) => f.startsWith('index.backup.') && f.endsWith('.ts'))
+      expect(backupFile).to.exist
+
+      // Verify backup content
+      if (backupFile) {
+        const backupContent = await fs.readFile(path.join(hooksDir, backupFile), 'utf8')
+        expect(backupContent).to.equal(customContent)
+      }
+    })
+
+    it('does not create backup when user declines', async () => {
+      // First init to create hooks
+      execSync(`node ${binPath} init`, {
+        cwd: testDir,
+        encoding: 'utf8',
+      })
+
+      // Run init with --force, simulating "n" response for backup
+      const output = execSync(`node ${binPath} init --force`, {
+        cwd: testDir,
+        encoding: 'utf8',
+        input: 'n\n',
+      })
+
+      expect(output).to.contain('Would you like to backup your existing index.ts customizations?')
+      expect(output).not.to.contain('Backed up existing index.ts to')
+
+      // Check that no backup file was created
+      const hooksDir = path.join(testDir, '.claude/hooks')
+      const files = await fs.readdir(hooksDir)
+      const backupFile = files.find((f) => f.startsWith('index.backup.') && f.endsWith('.ts'))
+      expect(backupFile).to.be.undefined
     })
   })
 
@@ -220,6 +280,7 @@ describe('init', () => {
       const output = execSync(`node ${binPath} init --local --force`, {
         cwd: testDir,
         encoding: 'utf8',
+        input: 'n\n',
       })
 
       expect(output).to.contain('Claude Code hooks initialized')
