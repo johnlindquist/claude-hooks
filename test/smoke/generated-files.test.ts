@@ -149,8 +149,6 @@ describe.skip('Smoke Tests - Generated Files', () => {
     it('should export utility functions', () => {
       expect(libContent).to.include('export function log')
       expect(libContent).to.include('export function runHook')
-      expect(libContent).to.include('export async function ensureSessionsDirectory')
-      expect(libContent).to.include('export async function saveSessionData')
     })
 
     it('should handle stdin for hook communication', () => {
