@@ -10,14 +10,7 @@ import type {
   UserPromptSubmitHandler,
 } from './lib'
 import {runHook} from './lib'
-import {getSessionsDirectory, saveSessionData} from './session'
-
-// Check for --session-dir flag
-const args = process.argv.slice(2)
-if (args.includes('--session-dir')) {
-  console.log(getSessionsDirectory())
-  process.exit(0)
-}
+import {saveSessionData} from './session'
 
 // PreToolUse handler - called before Claude uses any tool
 // This handler can block tool execution by returning a deny decision
