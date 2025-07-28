@@ -20,6 +20,7 @@ if (args.includes('--session-dir')) {
 }
 
 // PreToolUse handler - called before Claude uses any tool
+// This handler can block tool execution by returning a deny decision
 const preToolUse: PreToolUseHandler = async (payload) => {
   // Save session data (optional - remove if not needed)
   await saveSessionData('PreToolUse', {...payload, hook_type: 'PreToolUse'} as const)
