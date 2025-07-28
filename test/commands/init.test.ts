@@ -150,20 +150,21 @@ describe('init', () => {
   })
 
   describe('force flag', () => {
-    it('overwrites existing files without prompting', async () => {
+    it('overwrites existing files with prompt', async () => {
       execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
       })
 
+      // Provide input to decline backup
       const output = execSync(`node ${binPath} init --force`, {
         cwd: testDir,
         encoding: 'utf8',
+        input: 'n\n',
       })
 
       expect(output).to.contain('Claude Hooks Setup')
       expect(output).to.contain('Claude Code hooks initialized')
-      expect(output).not.to.contain('already exist')
     })
 
     it('warns about existing hooks without force flag', async () => {
