@@ -5,6 +5,10 @@ import type {HookPayload} from './lib'
 
 const SESSIONS_DIR = path.join(tmpdir(), 'claude-hooks-sessions')
 
+export function getSessionsDirectory(): string {
+  return SESSIONS_DIR
+}
+
 export async function saveSessionData(hookType: string, payload: HookPayload): Promise<void> {
   try {
     // Ensure sessions directory exists
