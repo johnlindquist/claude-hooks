@@ -194,10 +194,10 @@ describe('init', () => {
       await fs.writeFile(indexPath, customContent)
 
       // Run init with --force, simulating "y" response for backup
-      const output = execSync(`echo "y" | node ${binPath} init --force`, {
+      const output = execSync(`node ${binPath} init --force`, {
         cwd: testDir,
         encoding: 'utf8',
-        shell: true,
+        input: 'y\n',
       })
 
       expect(output).to.contain('Would you like to backup your existing index.ts customizations?')
@@ -224,10 +224,10 @@ describe('init', () => {
       })
 
       // Run init with --force, simulating "n" response for backup
-      const output = execSync(`echo "n" | node ${binPath} init --force`, {
+      const output = execSync(`node ${binPath} init --force`, {
         cwd: testDir,
         encoding: 'utf8',
-        shell: true,
+        input: 'n\n',
       })
 
       expect(output).to.contain('Would you like to backup your existing index.ts customizations?')
@@ -276,10 +276,10 @@ describe('init', () => {
       })
 
       // Force overwrite with local flag
-      const output = execSync(`echo "n" | node ${binPath} init --local --force`, {
+      const output = execSync(`node ${binPath} init --local --force`, {
         cwd: testDir,
         encoding: 'utf8',
-        shell: true,
+        input: 'n\n',
       })
 
       expect(output).to.contain('Claude Code hooks initialized')
