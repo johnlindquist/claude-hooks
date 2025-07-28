@@ -75,6 +75,7 @@ describe('CLI Integration Tests', () => {
       execSync(`node ${binPath} init --force`, {
         cwd: testDir,
         encoding: 'utf8',
+        input: 'n\n',
       })
 
       // Check that custom modification is gone
