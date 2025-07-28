@@ -207,7 +207,7 @@ describe('init', () => {
       // Check that backup file was created
       const hooksDir = path.join(testDir, '.claude/hooks')
       const files = await fs.readdir(hooksDir)
-      const backupFile = files.find(f => f.startsWith('index.backup.') && f.endsWith('.ts'))
+      const backupFile = files.find((f) => f.startsWith('index.backup.') && f.endsWith('.ts'))
       expect(backupFile).to.exist
 
       // Verify backup content
@@ -237,7 +237,7 @@ describe('init', () => {
       // Check that no backup file was created
       const hooksDir = path.join(testDir, '.claude/hooks')
       const files = await fs.readdir(hooksDir)
-      const backupFile = files.find(f => f.startsWith('index.backup.') && f.endsWith('.ts'))
+      const backupFile = files.find((f) => f.startsWith('index.backup.') && f.endsWith('.ts'))
       expect(backupFile).to.be.undefined
     })
   })
