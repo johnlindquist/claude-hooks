@@ -143,42 +143,6 @@ export interface HookHandlers {
   preCompact?: PreCompactHandler
 }
 
-// Session management utilities
-const SESSIONS_DIR = path.join(process.cwd(), '.claude', 'hooks', 'sessions')
-
-export async function ensureSessionsDirectory(): Promise<void> {
-  try {
-    await fs.mkdir(SESSIONS_DIR, {recursive: true})
-  } catch (error) {
-    console.error('Failed to create sessions directory:', error)
-  }
-}
-
-export async function saveSessionData(hookType: string, payload: HookPayload): Promise<void> {
-  try {
-    const timestamp = new Date().toISOString()
-    const sessionFile = path.join(SESSIONS_DIR, `${payload.session_id}.json`)
-
-    let sessionData: Array<{timestamp: string; hookType: string; payload: HookPayload}> = []
-    try {
-      const existing = await fs.readFile(sessionFile, 'utf-8')
-      sessionData = JSON.parse(existing)
-    } catch {
-      // File doesn't exist yet
-    }
-
-    sessionData.push({
-      timestamp,
-      hookType,
-      payload,
-    })
-
-    await fs.writeFile(sessionFile, JSON.stringify(sessionData, null, 2))
-  } catch (error) {
-    console.error('Failed to save session data:', error)
-  }
-}
-
 // Logging utility
 export function log(...args: unknown[]): void {
   console.log(`[${new Date().toISOString()}]`, ...args)
