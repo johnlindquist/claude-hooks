@@ -3,8 +3,8 @@ import {fileURLToPath} from 'node:url'
 import {Command, Flags} from '@oclif/core'
 import chalk from 'chalk'
 import fs from 'fs-extra'
-import ora from 'ora'
 import inquirer from 'inquirer'
+import ora from 'ora'
 
 export default class Init extends Command {
   static description = `Initialize Claude Code hooks in your project
@@ -73,7 +73,7 @@ Requirements:
     // Check if hooks already exist
     const indexPath = '.claude/hooks/index.ts'
     const hooksExist = await fs.pathExists(indexPath)
-    
+
     if (hooksExist && !flags.force) {
       console.log(chalk.yellow('Claude hooks already exist. Use --force to overwrite.'))
       return
@@ -154,7 +154,7 @@ Requirements:
   private async backupIndexFile(indexPath: string): Promise<void> {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
     const backupPath = `.claude/hooks/index.backup.${timestamp}.ts`
-    
+
     try {
       await fs.copy(indexPath, backupPath)
       console.log(chalk.green(`✅ Backed up existing index.ts to ${backupPath}`))
