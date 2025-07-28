@@ -1,32 +1,26 @@
 #!/usr/bin/env bun
 
-import {tmpdir} from 'node:os'
-import * as path from 'node:path'
 import type {
-  NotificationPayload,
-  PostToolUsePayload,
-  PreCompactPayload,
-  PreCompactResponse,
-  PreToolUsePayload,
-  PreToolUseResponse,
-  StopPayload,
-  SubagentStopPayload,
-  UserPromptSubmitPayload,
-  UserPromptSubmitResponse,
+  PreToolUseHandler,
+  PostToolUseHandler,
+  NotificationHandler,
+  StopHandler,
+  SubagentStopHandler,
+  UserPromptSubmitHandler,
+  PreCompactHandler,
 } from './lib'
 import {runHook} from './lib'
-import {saveSessionData} from './session'
+import {saveSessionData, getSessionsDirectory} from './session'
 
 // Check for --session-dir flag
 const args = process.argv.slice(2)
 if (args.includes('--session-dir')) {
-  const SESSIONS_DIR = path.join(tmpdir(), 'claude-hooks-sessions')
-  console.log(SESSIONS_DIR)
+  console.log(getSessionsDirectory())
   process.exit(0)
 }
 
 // PreToolUse handler - called before Claude uses any tool
-async function preToolUse(payload: PreToolUsePayload): Promise<PreToolUseResponse> {
+const preToolUse: PreToolUseHandler = async (payload) => {
   // Save session data (optional - remove if not needed)
   await saveSessionData('PreToolUse', {...payload, hook_type: 'PreToolUse'} as const)
 
@@ -44,7 +38,10 @@ async function preToolUse(payload: PreToolUsePayload): Promise<PreToolUseRespons
     // Block dangerous commands
     if (command.includes('rm -rf /') || command.includes('rm -rf ~')) {
       console.error('❌ Dangerous command detected! Blocking execution.')
-      return {decision: 'block', reason: `Dangerous command detected: ${command}`}
+      return {
+        permissionDecision: 'deny',
+        permissionDecisionReason: `Dangerous command detected: ${command}`,
+      }
     }
   }
 
@@ -55,7 +52,7 @@ async function preToolUse(payload: PreToolUsePayload): Promise<PreToolUseRespons
 }
 
 // PostToolUse handler - called after Claude uses a tool
-async function postToolUse(payload: PostToolUsePayload): Promise<void> {
+const postToolUse: PostToolUseHandler = async (payload) => {
   // Save session data (optional - remove if not needed)
   await saveSessionData('PostToolUse', {...payload, hook_type: 'PostToolUse'} as const)
 
@@ -65,26 +62,32 @@ async function postToolUse(payload: PostToolUsePayload): Promise<void> {
   }
 
   // Add your custom post-processing logic here
+
+  return {} // Return empty object to continue normally
 }
 
 // Notification handler - receive Claude's notifications
-async function notification(payload: NotificationPayload): Promise<void> {
+const notification: NotificationHandler = async (payload) => {
   await saveSessionData('Notification', {...payload, hook_type: 'Notification'} as const)
 
   // Example: Log Claude's progress
   console.log(`🔔 ${payload.message}`)
+
+  return {} // Return empty object to continue normally
 }
 
 // Stop handler - called when Claude stops
-async function stop(payload: StopPayload): Promise<void> {
+const stop: StopHandler = async (payload) => {
   await saveSessionData('Stop', {...payload, hook_type: 'Stop'} as const)
 
   // Example: Summary or cleanup logic
   console.log(`👋 Session ended`)
+
+  return {} // Return empty object to continue normally
 }
 
 // SubagentStop handler - called when a Claude subagent (Task tool) stops
-async function subagentStop(payload: SubagentStopPayload): Promise<void> {
+const subagentStop: SubagentStopHandler = async (payload) => {
   await saveSessionData('SubagentStop', {...payload, hook_type: 'SubagentStop'} as const)
 
   // Example: Log subagent completion
@@ -95,10 +98,12 @@ async function subagentStop(payload: SubagentStopPayload): Promise<void> {
   if (payload.stop_hook_active) {
     console.log('⚠️  Stop hook is already active, skipping additional processing')
   }
+
+  return {} // Return empty object to continue normally
 }
 
 // UserPromptSubmit handler - called when the user submits a prompt
-async function userPromptSubmit(payload: UserPromptSubmitPayload): Promise<UserPromptSubmitResponse> {
+const userPromptSubmit: UserPromptSubmitHandler = async (payload) => {
   await saveSessionData('UserPromptSubmit', {...payload, hook_type: 'UserPromptSubmit'} as const)
 
   // Example: Log user prompts
@@ -124,7 +129,7 @@ async function userPromptSubmit(payload: UserPromptSubmitPayload): Promise<UserP
 }
 
 // PreCompact handler - called before Claude compacts the conversation
-async function preCompact(payload: PreCompactPayload): Promise<PreCompactResponse> {
+const preCompact: PreCompactHandler = async (payload) => {
   await saveSessionData('PreCompact', {...payload, hook_type: 'PreCompact'} as const)
 
   // Example: Log compact events
