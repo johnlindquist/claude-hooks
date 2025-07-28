@@ -49,7 +49,7 @@ async function preToolUse(payload: PreToolUsePayload): Promise<PreToolUseRespons
       console.error('❌ Dangerous command detected! Blocking execution.')
       return {
         permissionDecision: 'deny',
-        permissionDecisionReason: `Dangerous command detected: ${command}`
+        permissionDecisionReason: `Dangerous command detected: ${command}`,
       }
     }
   }
@@ -71,7 +71,7 @@ async function postToolUse(payload: PostToolUsePayload): Promise<PostToolUseResp
   }
 
   // Add your custom post-processing logic here
-  
+
   return {} // Return empty object to continue normally
 }
 
@@ -81,7 +81,7 @@ async function notification(payload: NotificationPayload): Promise<BaseHookRespo
 
   // Example: Log Claude's progress
   console.log(`🔔 ${payload.message}`)
-  
+
   return {} // Return empty object to continue normally
 }
 
@@ -91,7 +91,7 @@ async function stop(payload: StopPayload): Promise<StopResponse> {
 
   // Example: Summary or cleanup logic
   console.log(`👋 Session ended`)
-  
+
   return {} // Return empty object to continue normally
 }
 
@@ -107,7 +107,7 @@ async function subagentStop(payload: SubagentStopPayload): Promise<StopResponse>
   if (payload.stop_hook_active) {
     console.log('⚠️  Stop hook is already active, skipping additional processing')
   }
-  
+
   return {} // Return empty object to continue normally
 }
 
