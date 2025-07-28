@@ -1,5 +1,7 @@
 #!/usr/bin/env bun
 
+import {tmpdir} from 'node:os'
+import * as path from 'node:path'
 import type {
   NotificationPayload,
   PostToolUsePayload,
@@ -12,9 +14,16 @@ import type {
   UserPromptSubmitPayload,
   UserPromptSubmitResponse,
 } from './lib'
-
 import {runHook} from './lib'
 import {saveSessionData} from './session'
+
+// Check for --session-dir flag
+const args = process.argv.slice(2)
+if (args.includes('--session-dir')) {
+  const SESSIONS_DIR = path.join(tmpdir(), 'claude-hooks-sessions')
+  console.log(SESSIONS_DIR)
+  process.exit(0)
+}
 
 // PreToolUse handler - called before Claude uses any tool
 async function preToolUse(payload: PreToolUsePayload): Promise<PreToolUseResponse> {
