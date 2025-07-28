@@ -76,8 +76,8 @@ export interface BaseHookResponse {
 
 // PreToolUse specific response
 export interface PreToolUseResponse extends BaseHookResponse {
-  decision?: 'approve' | 'block'
-  reason?: string
+  permissionDecision?: 'allow' | 'deny' | 'ask'
+  permissionDecisionReason?: string
 }
 
 // PostToolUse specific response
@@ -98,6 +98,10 @@ export interface UserPromptSubmitResponse extends BaseHookResponse {
   reason?: string
   contextFiles?: string[]
   updatedPrompt?: string
+  hookSpecificOutput?: {
+    hookEventName: 'UserPromptSubmit'
+    additionalContext?: string
+  }
 }
 
 // PreCompact specific response
@@ -120,10 +124,10 @@ export interface BashToolInput {
 
 // Hook handler types
 export type PreToolUseHandler = (payload: PreToolUsePayload) => Promise<PreToolUseResponse> | PreToolUseResponse
-export type PostToolUseHandler = (payload: PostToolUsePayload) => Promise<void> | void
-export type NotificationHandler = (payload: NotificationPayload) => Promise<void> | void
-export type StopHandler = (payload: StopPayload) => Promise<void> | void
-export type SubagentStopHandler = (payload: SubagentStopPayload) => Promise<void> | void
+export type PostToolUseHandler = (payload: PostToolUsePayload) => Promise<PostToolUseResponse> | PostToolUseResponse
+export type NotificationHandler = (payload: NotificationPayload) => Promise<BaseHookResponse> | BaseHookResponse
+export type StopHandler = (payload: StopPayload) => Promise<StopResponse> | StopResponse
+export type SubagentStopHandler = (payload: SubagentStopPayload) => Promise<StopResponse> | StopResponse
 export type UserPromptSubmitHandler = (
   payload: UserPromptSubmitPayload,
 ) => Promise<UserPromptSubmitResponse> | UserPromptSubmitResponse
@@ -205,31 +209,39 @@ export function runHook(handlers: HookHandlers): void {
 
         case 'PostToolUse':
           if (handlers.postToolUse) {
-            await handlers.postToolUse(payload)
+            const response = await handlers.postToolUse(payload)
+            console.log(JSON.stringify(response))
+          } else {
+            console.log(JSON.stringify({}))
           }
-          console.log(JSON.stringify({}))
           break
 
         case 'Notification':
           if (handlers.notification) {
-            await handlers.notification(payload)
+            const response = await handlers.notification(payload)
+            console.log(JSON.stringify(response))
+          } else {
+            console.log(JSON.stringify({}))
           }
-          console.log(JSON.stringify({}))
           break
 
         case 'Stop':
           if (handlers.stop) {
-            await handlers.stop(payload)
+            const response = await handlers.stop(payload)
+            console.log(JSON.stringify(response))
+          } else {
+            console.log(JSON.stringify({}))
           }
-          console.log(JSON.stringify({}))
           process.exit(0)
           return // Unreachable but satisfies linter
 
         case 'SubagentStop':
           if (handlers.subagentStop) {
-            await handlers.subagentStop(payload)
+            const response = await handlers.subagentStop(payload)
+            console.log(JSON.stringify(response))
+          } else {
+            console.log(JSON.stringify({}))
           }
-          console.log(JSON.stringify({}))
           process.exit(0)
           return // Unreachable but satisfies linter
 
