@@ -63,7 +63,7 @@ import {generateIndexFile} from '../src/generator'
 describe('generateIndexFile', () => {
   it('should include preToolUse when selected', () => {
     const result = generateIndexFile({preToolUse: true})
-    expect(result).to.include('function preToolUse')
+    expect(result).to.include('const preToolUse: PreToolUseHandler')
   })
 })
 ```

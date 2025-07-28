@@ -41,16 +41,16 @@ export function expectHooksContent(
   },
 ): void {
   if (options.hasPreToolUse) {
-    expect(content).to.include('function preToolUse')
+    expect(content).to.include('const preToolUse: PreToolUseHandler')
   }
   if (options.hasPostToolUse) {
-    expect(content).to.include('function postToolUse')
+    expect(content).to.include('const postToolUse: PostToolUseHandler')
   }
   if (options.hasNotification) {
-    expect(content).to.include('function notification')
+    expect(content).to.include('const notification: NotificationHandler')
   }
   if (options.hasStop) {
-    expect(content).to.include('function stop')
+    expect(content).to.include('const stop: StopHandler')
   }
   if (options.hasSecurityPatterns) {
     expect(content).to.include('DANGEROUS_FILE_OPS')
