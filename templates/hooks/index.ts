@@ -142,7 +142,7 @@ const preCompact: PreCompactHandler = async (payload) => {
 }
 
 // Run the hook with our handlers
-runHook({
+await runHook({
   preToolUse,
   postToolUse,
   notification,

@@ -25,7 +25,7 @@ jobs:
           bun-version: latest
       - run: npm ci
       - run: npm run build
-      - run: npm test
+      - run: bun test --timeout 30000
 
   lint:
     runs-on: ubuntu-latest
@@ -51,7 +51,7 @@ jobs:
           bun-version: latest
       - run: npm ci
       - run: npm run build
-      - run: npm run test:smoke
+      - run: bun test --timeout 30000 test/smoke
       
   integration:
     runs-on: ubuntu-latest
@@ -66,4 +66,4 @@ jobs:
           bun-version: latest
       - run: npm ci
       - run: npm run build
-      - run: npm run test:integration
+      - run: bun test --timeout 30000 test/integration
