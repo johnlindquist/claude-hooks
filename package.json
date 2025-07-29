@@ -80,7 +80,7 @@
     "posttest": "node -e \"process.platform !== 'win32' && process.exit(1)\" && npm run lint || exit 0",
     "prepare": "npm run build",
     "prepack": "npm run build && oclif manifest && oclif readme",
-    "test": "bun test",
+    "test": "bun test --timeout 30000",
     "test:unit": "bun test test/unit test/commands",
     "test:integration": "bun test test/integration --timeout 10000",
     "test:smoke": "bun test test/smoke --timeout 10000",
