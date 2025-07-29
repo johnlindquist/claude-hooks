@@ -55,7 +55,7 @@ runHook({
 `
     const scriptPath = path.join(testDir, 'test-hook.ts')
     await fs.writeFile(scriptPath, testScript)
-    
+
     // Only set executable permissions on Unix-like systems
     if (process.platform !== 'win32') {
       await fs.chmod(scriptPath, 0o755)
@@ -65,7 +65,7 @@ runHook({
     const child = spawn('bun', [scriptPath, 'PreToolUse'], {
       cwd: testDir,
       stdio: ['pipe', 'pipe', 'pipe'],
-      shell: process.platform === 'win32' // Use shell on Windows
+      shell: process.platform === 'win32', // Use shell on Windows
     })
 
     const testInput = {
@@ -143,7 +143,7 @@ runHook({
 `
     const scriptPath = path.join(testDir, 'test-large.ts')
     await fs.writeFile(scriptPath, testScript)
-    
+
     // Only set executable permissions on Unix-like systems
     if (process.platform !== 'win32') {
       await fs.chmod(scriptPath, 0o755)
@@ -155,7 +155,7 @@ runHook({
     const child = spawn('bun', [scriptPath, 'Notification'], {
       cwd: testDir,
       stdio: ['pipe', 'pipe', 'pipe'],
-      shell: process.platform === 'win32' // Use shell on Windows
+      shell: process.platform === 'win32', // Use shell on Windows
     })
 
     const testInput = {

@@ -4,23 +4,35 @@ import {fileURLToPath} from 'node:url'
 import {runCommand} from '@oclif/test'
 import {expect} from 'chai'
 import fs from 'fs-extra'
+import os from 'os'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 describe('init', () => {
-  const testDir = path.join(__dirname, '..', '..', 'test-output')
+  let testDir: string
   const binPath = path.join(__dirname, '..', '..', 'bin', 'run.js')
 
   beforeEach(async () => {
-    // Clean up and create test directory
-    await fs.remove(testDir)
-    await fs.ensureDir(testDir)
+    // Create unique test directory for each test
+    testDir = await fs.mkdtemp(path.join(os.tmpdir(), 'claude-hooks-test-'))
   })
 
   afterEach(async () => {
-    // Clean up
-    await fs.remove(testDir)
+    // Clean up with retry for Windows
+    try {
+      await fs.remove(testDir)
+    } catch (error) {
+      // On Windows, files might still be in use; wait and retry
+      if (process.platform === 'win32' && error.code === 'EBUSY') {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        try {
+          await fs.remove(testDir)
+        } catch {
+          // Ignore cleanup errors on Windows
+        }
+      }
+    }
   })
 
   describe('help', () => {
@@ -32,7 +44,11 @@ describe('init', () => {
         expect(stdout).to.contain('--local')
       } catch (_error) {
         // Fallback to testing with execSync for compiled version
-        const output = execSync(`node ${binPath} init --help`, {encoding: 'utf8'})
+        const output = execSync(`node ${binPath} init --help`, {
+          encoding: 'utf8',
+          timeout: 10000,
+          windowsHide: true,
+        })
         expect(output).to.contain('Initialize Claude Code hooks')
         expect(output).to.contain('--force')
         expect(output).to.contain('--local')
@@ -45,6 +61,8 @@ describe('init', () => {
       const output = execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
       })
       expect(output).to.contain('Claude Hooks Setup')
       expect(output).to.contain('Claude Code hooks initialized')
@@ -54,6 +72,8 @@ describe('init', () => {
       execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
       })
 
       // Check that all files were created
@@ -67,6 +87,8 @@ describe('init', () => {
       execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
       })
 
       const settings = await fs.readJson(path.join(testDir, '.claude/settings.json'))
@@ -110,6 +132,8 @@ describe('init', () => {
       execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
       })
 
       const indexContent = await fs.readFile(path.join(testDir, '.claude/hooks/index.ts'), 'utf8')
@@ -144,6 +168,8 @@ describe('init', () => {
       const output = execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
       })
       expect(output).to.contain('Claude Code hooks initialized!')
     })
@@ -154,12 +180,16 @@ describe('init', () => {
       execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
       })
 
       // Provide input to decline backup
       const output = execSync(`node ${binPath} init --force`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
         input: 'n\n',
       })
 
@@ -171,11 +201,15 @@ describe('init', () => {
       execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
       })
 
       const output = execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
       })
 
       expect(output).to.contain('Claude hooks already exist')
@@ -187,6 +221,8 @@ describe('init', () => {
       execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
       })
 
       // Modify index.ts to simulate customizations
@@ -198,6 +234,8 @@ describe('init', () => {
       const output = execSync(`node ${binPath} init --force`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
         input: 'y\n',
       })
 
@@ -222,12 +260,16 @@ describe('init', () => {
       execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
       })
 
       // Run init with --force, simulating "n" response for backup
       const output = execSync(`node ${binPath} init --force`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
         input: 'n\n',
       })
 
@@ -247,6 +289,8 @@ describe('init', () => {
       execSync(`node ${binPath} init --local`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
       })
 
       // Check that settings.json.local was created
@@ -264,6 +308,8 @@ describe('init', () => {
       const output = execSync(`node ${binPath} init --local`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
       })
 
       expect(output).to.contain('Created settings.json.local for personal configuration')
@@ -274,12 +320,16 @@ describe('init', () => {
       execSync(`node ${binPath} init --local`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
       })
 
       // Force overwrite with local flag
       const output = execSync(`node ${binPath} init --local --force`, {
         cwd: testDir,
         encoding: 'utf8',
+        timeout: 10000,
+        windowsHide: true,
         input: 'n\n',
       })
 
@@ -293,7 +343,6 @@ describe('init', () => {
       // Skip on Windows
       if (process.platform === 'win32') {
         this.skip()
-        return
       }
 
       try {
@@ -305,6 +354,8 @@ describe('init', () => {
           execSync(`node ${binPath} init`, {
             cwd: testDir,
             encoding: 'utf8',
+            timeout: 10000,
+            windowsHide: true,
           })
         } catch (error: any) {
           errorOccurred = true
