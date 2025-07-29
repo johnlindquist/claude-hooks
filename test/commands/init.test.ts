@@ -46,7 +46,7 @@ describe('init', () => {
         // Fallback to testing with execSync for compiled version
         const output = execSync(`node ${binPath} init --help`, {
           encoding: 'utf8',
-          timeout: 10000,
+          timeout: 30000, // Increase timeout for Windows
           windowsHide: true,
         })
         expect(output).to.contain('Initialize Claude Code hooks')
@@ -58,21 +58,30 @@ describe('init', () => {
 
   describe('basic setup', () => {
     it('runs setup', async () => {
-      const output = execSync(`node ${binPath} init`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        timeout: 10000,
-        windowsHide: true,
-      })
-      expect(output).to.contain('Claude Hooks Setup')
-      expect(output).to.contain('Claude Code hooks initialized')
+      try {
+        const output = execSync(`node ${binPath} init`, {
+          cwd: testDir,
+          encoding: 'utf8',
+          timeout: 30000, // Increase timeout for Windows
+          windowsHide: true,
+          stdio: ['pipe', 'pipe', 'pipe'], // Explicitly set stdio
+        })
+        expect(output).to.contain('Claude Hooks Setup')
+        expect(output).to.contain('Claude Code hooks initialized')
+      } catch (error: any) {
+        // Log more details about the error
+        console.error('execSync error:', error.message)
+        console.error('stdout:', error.stdout?.toString())
+        console.error('stderr:', error.stderr?.toString())
+        throw error
+      }
     })
 
     it('creates all required files', async () => {
       execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
-        timeout: 10000,
+        timeout: 30000, // Increase timeout for Windows
         windowsHide: true,
       })
 
@@ -87,7 +96,7 @@ describe('init', () => {
       execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
-        timeout: 10000,
+        timeout: 30000, // Increase timeout for Windows
         windowsHide: true,
       })
 
@@ -132,7 +141,7 @@ describe('init', () => {
       execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
-        timeout: 10000,
+        timeout: 30000, // Increase timeout for Windows
         windowsHide: true,
       })
 
@@ -168,7 +177,7 @@ describe('init', () => {
       const output = execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
-        timeout: 10000,
+        timeout: 30000, // Increase timeout for Windows
         windowsHide: true,
       })
       expect(output).to.contain('Claude Code hooks initialized!')
@@ -180,7 +189,7 @@ describe('init', () => {
       execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
-        timeout: 10000,
+        timeout: 30000, // Increase timeout for Windows
         windowsHide: true,
       })
 
@@ -188,7 +197,7 @@ describe('init', () => {
       const output = execSync(`node ${binPath} init --force`, {
         cwd: testDir,
         encoding: 'utf8',
-        timeout: 10000,
+        timeout: 30000, // Increase timeout for Windows
         windowsHide: true,
         input: 'n\n',
       })
@@ -201,14 +210,14 @@ describe('init', () => {
       execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
-        timeout: 10000,
+        timeout: 30000, // Increase timeout for Windows
         windowsHide: true,
       })
 
       const output = execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
-        timeout: 10000,
+        timeout: 30000, // Increase timeout for Windows
         windowsHide: true,
       })
 
@@ -221,7 +230,7 @@ describe('init', () => {
       execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
-        timeout: 10000,
+        timeout: 30000, // Increase timeout for Windows
         windowsHide: true,
       })
 
@@ -234,7 +243,7 @@ describe('init', () => {
       const output = execSync(`node ${binPath} init --force`, {
         cwd: testDir,
         encoding: 'utf8',
-        timeout: 10000,
+        timeout: 30000, // Increase timeout for Windows
         windowsHide: true,
         input: 'y\n',
       })
@@ -260,7 +269,7 @@ describe('init', () => {
       execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
-        timeout: 10000,
+        timeout: 30000, // Increase timeout for Windows
         windowsHide: true,
       })
 
@@ -268,7 +277,7 @@ describe('init', () => {
       const output = execSync(`node ${binPath} init --force`, {
         cwd: testDir,
         encoding: 'utf8',
-        timeout: 10000,
+        timeout: 30000, // Increase timeout for Windows
         windowsHide: true,
         input: 'n\n',
       })
@@ -289,7 +298,7 @@ describe('init', () => {
       execSync(`node ${binPath} init --local`, {
         cwd: testDir,
         encoding: 'utf8',
-        timeout: 10000,
+        timeout: 30000, // Increase timeout for Windows
         windowsHide: true,
       })
 
@@ -308,7 +317,7 @@ describe('init', () => {
       const output = execSync(`node ${binPath} init --local`, {
         cwd: testDir,
         encoding: 'utf8',
-        timeout: 10000,
+        timeout: 30000, // Increase timeout for Windows
         windowsHide: true,
       })
 
@@ -320,7 +329,7 @@ describe('init', () => {
       execSync(`node ${binPath} init --local`, {
         cwd: testDir,
         encoding: 'utf8',
-        timeout: 10000,
+        timeout: 30000, // Increase timeout for Windows
         windowsHide: true,
       })
 
@@ -328,7 +337,7 @@ describe('init', () => {
       const output = execSync(`node ${binPath} init --local --force`, {
         cwd: testDir,
         encoding: 'utf8',
-        timeout: 10000,
+        timeout: 30000, // Increase timeout for Windows
         windowsHide: true,
         input: 'n\n',
       })
@@ -354,7 +363,7 @@ describe('init', () => {
           execSync(`node ${binPath} init`, {
             cwd: testDir,
             encoding: 'utf8',
-            timeout: 10000,
+            timeout: 30000, // Increase timeout for Windows
             windowsHide: true,
           })
         } catch (error: any) {
