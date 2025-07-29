@@ -22,6 +22,23 @@ describe('stdin handling', () => {
   })
 
   it('should handle JSON input via Bun.stdin.json()', async () => {
+    // Skip on Windows if Bun is not available
+    if (process.platform === 'win32') {
+      try {
+        await new Promise((resolve, reject) => {
+          const checkBun = spawn('bun', ['--version'])
+          checkBun.on('error', reject)
+          checkBun.on('exit', (code) => {
+            if (code === 0) resolve(true)
+            else reject(new Error('Bun not available'))
+          })
+        })
+      } catch {
+        console.log('Skipping test on Windows - Bun not available')
+        return
+      }
+    }
+
     // Create a minimal test hook script
     const testScript = `#!/usr/bin/env bun
 
@@ -38,17 +55,22 @@ runHook({
 `
     const scriptPath = path.join(testDir, 'test-hook.ts')
     await fs.writeFile(scriptPath, testScript)
-    await fs.chmod(scriptPath, 0o755)
+    
+    // Only set executable permissions on Unix-like systems
+    if (process.platform !== 'win32') {
+      await fs.chmod(scriptPath, 0o755)
+    }
 
     // Run the hook with test input
     const child = spawn('bun', [scriptPath, 'PreToolUse'], {
       cwd: testDir,
       stdio: ['pipe', 'pipe', 'pipe'],
+      shell: process.platform === 'win32' // Use shell on Windows
     })
 
     const testInput = {
       session_id: 'test-session',
-      transcript_path: '/tmp/test.md',
+      transcript_path: path.join(os.tmpdir(), 'test.md'), // Use platform-specific temp path
       hook_event_name: 'PreToolUse',
       tool_name: 'TestTool',
       tool_input: {test: true},
@@ -89,6 +111,23 @@ runHook({
   })
 
   it('should handle large JSON payloads', async () => {
+    // Skip on Windows if Bun is not available
+    if (process.platform === 'win32') {
+      try {
+        await new Promise((resolve, reject) => {
+          const checkBun = spawn('bun', ['--version'])
+          checkBun.on('error', reject)
+          checkBun.on('exit', (code) => {
+            if (code === 0) resolve(true)
+            else reject(new Error('Bun not available'))
+          })
+        })
+      } catch {
+        console.log('Skipping test on Windows - Bun not available')
+        return
+      }
+    }
+
     // Create a test hook that echoes back the size of the input
     const testScript = `#!/usr/bin/env bun
 
@@ -104,7 +143,11 @@ runHook({
 `
     const scriptPath = path.join(testDir, 'test-large.ts')
     await fs.writeFile(scriptPath, testScript)
-    await fs.chmod(scriptPath, 0o755)
+    
+    // Only set executable permissions on Unix-like systems
+    if (process.platform !== 'win32') {
+      await fs.chmod(scriptPath, 0o755)
+    }
 
     // Create a large message
     const largeMessage = 'x'.repeat(100000) // 100KB message
@@ -112,11 +155,12 @@ runHook({
     const child = spawn('bun', [scriptPath, 'Notification'], {
       cwd: testDir,
       stdio: ['pipe', 'pipe', 'pipe'],
+      shell: process.platform === 'win32' // Use shell on Windows
     })
 
     const testInput = {
       session_id: 'test-session',
-      transcript_path: '/tmp/test.md',
+      transcript_path: path.join(os.tmpdir(), 'test.md'), // Use platform-specific temp path
       hook_event_name: 'Notification',
       message: largeMessage,
     }
