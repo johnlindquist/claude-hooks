@@ -349,9 +349,9 @@ describe('init', () => {
 
   describe('error handling', () => {
     it('handles permission errors gracefully', async function () {
-      // Skip on Windows
+      // Skip on Windows - file permissions work differently
       if (process.platform === 'win32') {
-        this.skip()
+        return
       }
 
       try {

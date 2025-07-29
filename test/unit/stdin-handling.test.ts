@@ -95,7 +95,9 @@ runHook({
       child.on('exit', (code) => {
         if (code === 0) resolve()
         else {
-          console.error('Error output:', errorOutput)
+          console.error('Process exit code:', code)
+          console.error('stdout:', output)
+          console.error('stderr:', errorOutput)
           reject(new Error(`Process exited with code ${code}`))
         }
       })
@@ -103,6 +105,11 @@ runHook({
     })
 
     // Parse and verify output
+    if (!output.trim()) {
+      console.error('No output received from process')
+      console.error('stderr:', errorOutput)
+      throw new Error('No output from subprocess')
+    }
     const response = JSON.parse(output.trim())
     expect(response).toEqual({
       permissionDecision: 'allow',
@@ -184,7 +191,9 @@ runHook({
       child.on('exit', (code) => {
         if (code === 0) resolve()
         else {
-          console.error('Error output:', errorOutput)
+          console.error('Process exit code:', code)
+          console.error('stdout:', output)
+          console.error('stderr:', errorOutput)
           reject(new Error(`Process exited with code ${code}`))
         }
       })
@@ -192,6 +201,11 @@ runHook({
     })
 
     // Parse and verify output
+    if (!output.trim()) {
+      console.error('No output received from process')
+      console.error('stderr:', errorOutput)
+      throw new Error('No output from subprocess')
+    }
     const response = JSON.parse(output.trim())
     expect(response.messageLength).toBe(100000)
   })
