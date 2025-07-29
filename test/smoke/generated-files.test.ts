@@ -152,8 +152,7 @@ describe.skip('Smoke Tests - Generated Files', () => {
     })
 
     it('should handle stdin for hook communication', () => {
-      expect(libContent).to.include("process.stdin.on('data'")
-      expect(libContent).to.include('JSON.parse(data.toString())')
+      expect(libContent).to.include('await Bun.stdin.json()')
       expect(libContent).to.include('JSON.stringify')
     })
   })
