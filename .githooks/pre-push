@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Pre-push hook to run linting and tests
+echo "Running pre-push checks..."
+
+# Run lint
+echo "Running lint checks..."
+npm run lint
+if [ $? -ne 0 ]; then
+    echo "❌ Lint checks failed! Please fix linting errors before pushing."
+    exit 1
+fi
+
+# Run tests with Bun
+echo "Running tests..."
+bun test
+if [ $? -ne 0 ]; then
+    echo "❌ Tests failed! Please fix failing tests before pushing."
+    exit 1
+fi
+
+echo "✅ All checks passed!"
+exit 0
