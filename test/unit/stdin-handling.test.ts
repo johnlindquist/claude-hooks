@@ -1,8 +1,12 @@
-import {afterEach, beforeEach, describe, expect, it} from 'bun:test'
-import {spawn} from 'child_process'
-import {promises as fs} from 'fs'
-import os from 'os'
-import path from 'path'
+import {spawn} from 'node:child_process'
+import * as os from 'node:os'
+import * as path from 'node:path'
+import {fileURLToPath} from 'node:url'
+import {expect} from 'chai'
+import fs from 'fs-extra'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 describe('stdin handling', () => {
   let testDir: string
@@ -18,7 +22,7 @@ describe('stdin handling', () => {
 
   afterEach(async () => {
     // Clean up
-    await fs.rm(testDir, {recursive: true, force: true})
+    await fs.remove(testDir)
   })
 
   it('should handle JSON input via Bun.stdin.json()', async () => {
@@ -69,9 +73,9 @@ runHook({
     })
 
     // Wait for process to complete
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       child.on('exit', (code) => {
-        if (code === 0) resolve(code)
+        if (code === 0) resolve()
         else {
           console.error('Error output:', errorOutput)
           reject(new Error(`Process exited with code ${code}`))
@@ -82,7 +86,7 @@ runHook({
 
     // Parse and verify output
     const response = JSON.parse(output.trim())
-    expect(response).toEqual({
+    expect(response).to.deep.equal({
       permissionDecision: 'allow',
       testReceived: 'TestTool',
     })
@@ -136,9 +140,9 @@ runHook({
     })
 
     // Wait for process to complete
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       child.on('exit', (code) => {
-        if (code === 0) resolve(code)
+        if (code === 0) resolve()
         else {
           console.error('Error output:', errorOutput)
           reject(new Error(`Process exited with code ${code}`))
@@ -149,6 +153,6 @@ runHook({
 
     // Parse and verify output
     const response = JSON.parse(output.trim())
-    expect(response.messageLength).toBe(100000)
+    expect(response.messageLength).to.equal(100000)
   })
 })
