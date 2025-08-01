@@ -286,6 +286,7 @@ export interface NotificationPayload {
   transcript_path: string
   hook_event_name: 'Notification'
   message: string
+  title?: string
 }
 
 export interface StopPayload {
@@ -316,6 +317,13 @@ export interface PreCompactPayload {
   trigger: 'manual' | 'auto'
 }
 
+export interface SessionStartPayload {
+  session_id: string
+  transcript_path: string
+  hook_event_name: 'SessionStart'
+  source: string
+}
+
 export type HookPayload =
   | (PreToolUsePayload & {hook_type: 'PreToolUse'})
   | (PostToolUsePayload & {hook_type: 'PostToolUse'})
@@ -324,6 +332,7 @@ export type HookPayload =
   | (SubagentStopPayload & {hook_type: 'SubagentStop'})
   | (UserPromptSubmitPayload & {hook_type: 'UserPromptSubmit'})
   | (PreCompactPayload & {hook_type: 'PreCompact'})
+  | (SessionStartPayload & {hook_type: 'SessionStart'})
 
 // Base response fields available to all hooks
 export interface BaseHookResponse {
@@ -334,8 +343,15 @@ export interface BaseHookResponse {
 
 // PreToolUse specific response
 export interface PreToolUseResponse extends BaseHookResponse {
+  decision?: 'approve' | 'block'
+  reason?: string
   permissionDecision?: 'allow' | 'deny' | 'ask'
   permissionDecisionReason?: string
+  hookSpecificOutput?: {
+    hookEventName: 'PreToolUse'
+    permissionDecision?: 'allow' | 'deny' | 'ask'
+    permissionDecisionReason?: string
+  }
 }
 
 // PostToolUse specific response
@@ -347,7 +363,7 @@ export interface PostToolUseResponse extends BaseHookResponse {
 // Stop/SubagentStop specific response
 export interface StopResponse extends BaseHookResponse {
   decision?: 'block'
-  reason?: string // Required when decision is 'block'
+  reason?: string
 }
 
 // UserPromptSubmit specific response
@@ -366,6 +382,16 @@ export interface UserPromptSubmitResponse extends BaseHookResponse {
 export interface PreCompactResponse extends BaseHookResponse {
   decision?: 'approve' | 'block'
   reason?: string
+}
+
+// SessionStart specific response
+export interface SessionStartResponse extends BaseHookResponse {
+  decision?: 'approve' | 'block'
+  reason?: string
+  hookSpecificOutput?: {
+    hookEventName: 'SessionStart'
+    additionalContext?: string
+  }
 }
 
 // Legacy simple response for backward compatibility
@@ -390,6 +416,7 @@ export type UserPromptSubmitHandler = (
   payload: UserPromptSubmitPayload,
 ) => Promise<UserPromptSubmitResponse> | UserPromptSubmitResponse
 export type PreCompactHandler = (payload: PreCompactPayload) => Promise<PreCompactResponse> | PreCompactResponse
+export type SessionStartHandler = (payload: SessionStartPayload) => Promise<SessionStartResponse> | SessionStartResponse
 
 export interface HookHandlers {
   preToolUse?: PreToolUseHandler
@@ -399,6 +426,7 @@ export interface HookHandlers {
   subagentStop?: SubagentStopHandler
   userPromptSubmit?: UserPromptSubmitHandler
   preCompact?: PreCompactHandler
+  sessionStart?: SessionStartHandler
 }
 
 // Logging utility
@@ -455,7 +483,7 @@ export function runHook(handlers: HookHandlers): void {
             console.log(JSON.stringify({}))
           }
           process.exit(0)
-          return // Unreachable but satisfies linter
+          break
 
         case 'SubagentStop':
           if (handlers.subagentStop) {
@@ -465,7 +493,7 @@ export function runHook(handlers: HookHandlers): void {
             console.log(JSON.stringify({}))
           }
           process.exit(0)
-          return // Unreachable but satisfies linter
+          break
 
         case 'UserPromptSubmit':
           if (handlers.userPromptSubmit) {
@@ -479,6 +507,15 @@ export function runHook(handlers: HookHandlers): void {
         case 'PreCompact':
           if (handlers.preCompact) {
             const response = await handlers.preCompact(payload)
+            console.log(JSON.stringify(response))
+          } else {
+            console.log(JSON.stringify({}))
+          }
+          break
+
+        case 'SessionStart':
+          if (handlers.sessionStart) {
+            const response = await handlers.sessionStart(payload)
             console.log(JSON.stringify(response))
           } else {
             console.log(JSON.stringify({}))
