@@ -323,6 +323,7 @@ export interface SessionStartPayload {
   hook_event_name: 'SessionStart'
   source: string
 }
+
 export type HookPayload =
   | (PreToolUsePayload & {hook_type: 'PreToolUse'})
   | (PostToolUsePayload & {hook_type: 'PostToolUse'})
@@ -385,6 +386,7 @@ export interface SessionStartResponse extends BaseHookResponse {
     additionalContext?: string
   }
 }
+
 // Legacy simple response for backward compatibility
 export interface HookResponse {
   action: 'continue' | 'block'
@@ -417,6 +419,7 @@ export interface HookHandlers {
   subagentStop?: SubagentStopHandler
   userPromptSubmit?: UserPromptSubmitHandler
   preCompact?: PreCompactHandler
+  sessionStart?: SessionStartHandler
 }
 
 // Logging utility
