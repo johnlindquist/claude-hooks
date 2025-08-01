@@ -317,7 +317,6 @@ export interface PreCompactPayload {
   trigger: 'manual' | 'auto'
 }
 
-
 export interface SessionStartPayload {
   session_id: string
   transcript_path: string
@@ -376,7 +375,6 @@ export interface PreCompactResponse extends BaseHookResponse {
   decision?: 'approve' | 'block'
   reason?: string
 }
-
 
 // SessionStart specific response
 export interface SessionStartResponse extends BaseHookResponse {
@@ -505,14 +503,14 @@ export function runHook(handlers: HookHandlers): void {
           }
           break
 
-      case 'SessionStart':
-        if (handlers.sessionStart) {
-          const response = await handlers.sessionStart(payload)
-          console.log(JSON.stringify(response))
-        } else {
-          console.log(JSON.stringify({}))
-        }
-        break
+        case 'SessionStart':
+          if (handlers.sessionStart) {
+            const response = await handlers.sessionStart(payload)
+            console.log(JSON.stringify(response))
+          } else {
+            console.log(JSON.stringify({}))
+          }
+          break
 
         default:
           console.log(JSON.stringify({}))
