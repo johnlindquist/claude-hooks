@@ -5,12 +5,40 @@ import type {
   PostToolUseHandler,
   PreCompactHandler,
   PreToolUseHandler,
+  SessionStartHandler,
   StopHandler,
   SubagentStopHandler,
   UserPromptSubmitHandler,
 } from './lib'
 import {runHook} from './lib'
 import {saveSessionData} from './session'
+
+// SessionStart handler - called when a new Claude session starts
+const sessionStart: SessionStartHandler = async (payload) => {
+  // Save session data (optional - remove if not needed)
+  await saveSessionData('SessionStart', {...payload, hook_type: 'SessionStart'} as const)
+
+  // Example: Log session start with source
+  console.log(`🚀 New session started from: ${payload.source}`)
+  console.log(`📍 Session ID: ${payload.session_id}`)
+
+  // Example: Load user preferences or configuration
+  // const userConfig = await loadUserPreferences()
+
+  // Example: Set up session-specific resources
+  // await initializeSessionResources(payload.session_id)
+
+  // Example: Apply different behavior based on session source
+  if (payload.source === 'vscode') {
+    console.log('👨‍💻 VS Code session detected - enabling IDE-specific features')
+  } else if (payload.source === 'web') {
+    console.log('🌐 Web session detected')
+  }
+
+  // Add your custom session initialization logic here
+
+  return {} // Empty object means continue normally
+}
 
 // PreToolUse handler - called before Claude uses any tool
 // This handler can block tool execution by returning a deny decision
@@ -143,6 +171,7 @@ const preCompact: PreCompactHandler = async (payload) => {
 
 // Run the hook with our handlers
 runHook({
+  sessionStart,
   preToolUse,
   postToolUse,
   notification,
