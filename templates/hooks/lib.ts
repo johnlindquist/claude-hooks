@@ -316,6 +316,13 @@ export interface PreCompactPayload {
   trigger: 'manual' | 'auto'
 }
 
+
+export interface SessionStartPayload {
+  session_id: string
+  transcript_path: string
+  hook_event_name: 'SessionStart'
+  source: string
+}
 export type HookPayload =
   | (PreToolUsePayload & {hook_type: 'PreToolUse'})
   | (PostToolUsePayload & {hook_type: 'PostToolUse'})
@@ -324,6 +331,7 @@ export type HookPayload =
   | (SubagentStopPayload & {hook_type: 'SubagentStop'})
   | (UserPromptSubmitPayload & {hook_type: 'UserPromptSubmit'})
   | (PreCompactPayload & {hook_type: 'PreCompact'})
+  | (SessionStartPayload & {hook_type: 'SessionStart'})
 
 // Base response fields available to all hooks
 export interface BaseHookResponse {
@@ -368,6 +376,16 @@ export interface PreCompactResponse extends BaseHookResponse {
   reason?: string
 }
 
+
+// SessionStart specific response
+export interface SessionStartResponse extends BaseHookResponse {
+  decision?: 'approve' | 'block'
+  reason?: string
+  hookSpecificOutput?: {
+    hookEventName: 'SessionStart'
+    additionalContext?: string
+  }
+}
 // Legacy simple response for backward compatibility
 export interface HookResponse {
   action: 'continue' | 'block'
@@ -390,6 +408,7 @@ export type UserPromptSubmitHandler = (
   payload: UserPromptSubmitPayload,
 ) => Promise<UserPromptSubmitResponse> | UserPromptSubmitResponse
 export type PreCompactHandler = (payload: PreCompactPayload) => Promise<PreCompactResponse> | PreCompactResponse
+export type SessionStartHandler = (payload: SessionStartPayload) => Promise<SessionStartResponse> | SessionStartResponse
 
 export interface HookHandlers {
   preToolUse?: PreToolUseHandler
@@ -484,6 +503,15 @@ export function runHook(handlers: HookHandlers): void {
             console.log(JSON.stringify({}))
           }
           break
+
+      case 'SessionStart':
+        if (handlers.sessionStart) {
+          const response = await handlers.sessionStart(payload)
+          console.log(JSON.stringify(response))
+        } else {
+          console.log(JSON.stringify({}))
+        }
+        break
 
         default:
           console.log(JSON.stringify({}))
