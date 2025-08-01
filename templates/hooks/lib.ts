@@ -286,6 +286,7 @@ export interface NotificationPayload {
   transcript_path: string
   hook_event_name: 'Notification'
   message: string
+  title?: string
 }
 
 export interface StopPayload {
