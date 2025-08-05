@@ -37,7 +37,7 @@ describe('Hook Edge Cases and Race Conditions', () => {
   describe('Duplicate Hook Execution Prevention', () => {
     it('should not execute both pre and post hooks for the same event', async () => {
       // This tests the scenario you mentioned where both hooks were firing
-      const executionLog: string[] = []
+      const _executionLog: string[] = []
 
       const hookScript = `#!/usr/bin/env bun
 import {runHook} from './lib'
@@ -363,7 +363,7 @@ async function runHook(
       reject(error)
     })
 
-    child.on('close', (code) => {
+    child.on('close', (_code) => {
       let response = {}
       try {
         const lines = stdout.trim().split('\n')
@@ -378,7 +378,7 @@ async function runHook(
         if (jsonLine) {
           response = JSON.parse(jsonLine)
         }
-      } catch (e) {
+      } catch (_e) {
         // Ignore parse errors
       }
 

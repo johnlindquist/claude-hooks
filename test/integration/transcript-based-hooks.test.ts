@@ -347,7 +347,7 @@ async function runHook(
       reject(error)
     })
 
-    child.on('close', (code) => {
+    child.on('close', (_code) => {
       let response = {}
       try {
         const lines = stdout.trim().split('\n')
@@ -362,7 +362,7 @@ async function runHook(
         if (jsonLine) {
           response = JSON.parse(jsonLine)
         }
-      } catch (e) {
+      } catch (_e) {
         // Ignore parse errors
       }
 

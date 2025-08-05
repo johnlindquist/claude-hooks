@@ -46,7 +46,7 @@ export const Notification: HookHandler = (args) => {
 }
 
 // Stop handler - called when Claude stops
-export const Stop: HookHandler = (args) => {
+export const Stop: HookHandler = (_args) => {
   console.log('👋 Session ended')
   // Add cleanup logic here if needed
 }

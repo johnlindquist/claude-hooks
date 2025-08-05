@@ -403,7 +403,7 @@ async function runHook(
 
     let stdout = ''
     let stderr = ''
-    let lastLine = ''
+    let _lastLine = ''
 
     child.stdout.on('data', (data) => {
       const output = data.toString()
@@ -411,7 +411,7 @@ async function runHook(
       // Keep track of the last line for the JSON response
       const lines = output.trim().split('\n')
       if (lines.length > 0) {
-        lastLine = lines[lines.length - 1]
+        _lastLine = lines[lines.length - 1]
       }
     })
 
@@ -423,7 +423,7 @@ async function runHook(
       reject(error)
     })
 
-    child.on('close', (code) => {
+    child.on('close', (_code) => {
       // Try to parse the response from the last line
       let response = {}
       try {
@@ -440,7 +440,7 @@ async function runHook(
         if (jsonLine) {
           response = JSON.parse(jsonLine)
         }
-      } catch (e) {
+      } catch (_e) {
         // Ignore parse errors
       }
 

@@ -153,7 +153,7 @@ export default class Init extends Command {
     this.log('\n✨ Claude hooks initialized successfully!')
     this.log('\nNext steps:')
     this.log('1. Edit .claude/hooks/index.ts to customize your hooks')
-    this.log('2. Your hooks are already configured in .claude/' + settingsFileName)
+    this.log(`2. Your hooks are already configured in .claude/${settingsFileName}`)
     this.log('\nExample hook implementation:')
     this.log(`
 export const PreToolUse: HookHandler = (args) => {

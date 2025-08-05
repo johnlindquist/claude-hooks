@@ -38,7 +38,7 @@ export interface HookResult {
   toolArgs?: unknown
 }
 
-export type HookHandler = (args: HookArgs) => HookResult | void | Promise<HookResult | void>
+export type HookHandler = (args: HookArgs) => HookResult | undefined | Promise<HookResult | undefined>
 
 interface Handlers {
   PreToolUse?: HookHandler
@@ -91,7 +91,7 @@ export function getTranscript(): string[] {
     }
 
     return lines
-  } catch (error) {
+  } catch (_error) {
     return []
   }
 }
@@ -113,7 +113,7 @@ export function getTranscriptStream(): AsyncIterable<string> {
     })
 
     return rl
-  } catch (error) {
+  } catch (_error) {
     return (async function* () {})()
   }
 }
