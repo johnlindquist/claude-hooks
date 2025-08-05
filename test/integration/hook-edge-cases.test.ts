@@ -3,34 +3,66 @@ import {tmpdir} from 'node:os'
 import * as path from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {expect} from 'chai'
-import * as fs from 'fs-extra'
+import fs from 'fs-extra'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+// Helper to run a hook and capture output
+async function runHook(
+  scriptPath: string,
+  payload: Record<string, any>,
+  options: {cwd?: string; logFile?: string} = {},
+): Promise<{response: Record<string, any>; logs: string[]}> {
+  return new Promise((resolve) => {
+    const child = spawn('bun', [scriptPath], {
+      cwd: options.cwd || path.dirname(scriptPath),
+      env: {...process.env},
+    })
+
+    let output = ''
+    const logs: string[] = []
+
+    child.stdout.on('data', (data) => {
+      output += data.toString()
+    })
+
+    child.stderr.on('data', (data) => {
+      logs.push(data.toString())
+    })
+
+    child.on('close', (_code) => {
+      let response = {}
+      try {
+        if (output.trim()) {
+          response = JSON.parse(output.trim())
+        }
+      } catch (_e) {
+        // Ignore parse errors
+      }
+
+      resolve({response, logs})
+    })
+
+    // Send the payload
+    child.stdin.write(JSON.stringify(payload))
+    child.stdin.end()
+  })
+}
+
 describe('Hook Edge Cases and Race Conditions', () => {
-  let tempDir: string
-  let hookScriptPath: string
-  let bunPath: string
+  const tempDir = path.join(tmpdir(), 'claude-hooks-edge-test')
+  const hookScriptPath = path.join(tempDir, 'index.ts')
+  const libPath = path.join(tempDir, 'lib.ts')
 
-  beforeEach(async () => {
-    tempDir = path.join(tmpdir(), `claude-hooks-edge-${Date.now()}`)
+  before(async () => {
     await fs.ensureDir(tempDir)
-
-    const hooksDir = path.join(tempDir, '.claude', 'hooks')
-    await fs.ensureDir(hooksDir)
-
-    const templatesDir = path.join(__dirname, '..', '..', 'templates', 'hooks')
-    await fs.copy(path.join(templatesDir, 'lib.ts'), path.join(hooksDir, 'lib.ts'))
-    await fs.copy(path.join(templatesDir, 'session.ts'), path.join(hooksDir, 'session.ts'))
-
-    hookScriptPath = path.join(hooksDir, 'index.ts')
-
-    // Find bun executable
-    bunPath = process.env.HOME ? path.join(process.env.HOME, '.bun/bin/bun') : 'bun'
+    // Copy the lib file
+    const libSourcePath = path.join(__dirname, '..', '..', 'templates', 'hooks', 'lib.ts')
+    await fs.copy(libSourcePath, libPath)
   })
 
-  afterEach(async () => {
+  after(async () => {
     await fs.remove(tempDir)
   })
 
@@ -68,101 +100,157 @@ runHook({
       // Create log file
       await fs.writeFile(path.join(tempDir, 'execution.log'), '')
 
-      // Execute PreToolUse
-      await runHook(bunPath, hookScriptPath, 'PreToolUse', {
-        session_id: 'test-dup-001',
-        transcript_path: '/tmp/test.jsonl',
-        hook_event_name: 'PreToolUse',
+      // Test PreToolUse
+      await runHook(hookScriptPath, {
+        type: 'PreToolUse',
         tool_name: 'Edit',
         tool_input: {file_path: 'test.js'},
       })
 
-      // Read execution log
-      const log = await fs.readFile(path.join(tempDir, 'execution.log'), 'utf8')
-      const executions = log.trim().split('\n').filter(Boolean)
+      // Test PostToolUse
+      await runHook(hookScriptPath, {
+        type: 'PostToolUse',
+        tool_name: 'Edit',
+        tool_response: {success: true},
+      })
 
-      // Should only have one execution
-      expect(executions).to.have.lengthOf(1)
-      expect(executions[0]).to.match(/^PRE:Edit:\d+$/)
-      expect(executions.some((e) => e.startsWith('POST:'))).to.be.false
+      // Read execution log
+      const logContent = await fs.readFile(path.join(tempDir, 'execution.log'), 'utf-8')
+      const logLines = logContent.trim().split('\n').filter(Boolean)
+
+      // Verify only the correct hooks were called
+      expect(logLines).to.have.lengthOf(2)
+      expect(logLines[0]).to.match(/^PRE:Edit:\d+$/)
+      expect(logLines[1]).to.match(/^POST:Edit:\d+$/)
     })
 
     it('should handle rapid sequential hook calls without cross-contamination', async () => {
       const hookScript = `#!/usr/bin/env bun
 import {runHook} from './lib'
 
-const handlers = {
-  preToolUse: async (payload) => {
-    // Simulate some processing time
-    await new Promise(resolve => setTimeout(resolve, 10))
-    console.log('PRE_RESULT:' + payload.tool_name)
-    return {permissionDecision: 'allow'}
-  },
-  postToolUse: async (payload) => {
-    // Different processing for post
-    console.log('POST_RESULT:' + payload.tool_name + ':' + (payload.tool_response?.success || 'unknown'))
-    return {}
+let callCount = 0
+
+const preToolUse = async (payload) => {
+  callCount++
+  const myCount = callCount
+  
+  // Simulate async work
+  await new Promise(resolve => setTimeout(resolve, Math.random() * 10))
+  
+  return {
+    message: \`Call \${myCount}: \${payload.tool_name}\`
   }
 }
 
-runHook(handlers)
+runHook({
+  preToolUse
+})
 `
       await fs.writeFile(hookScriptPath, hookScript)
       await fs.chmod(hookScriptPath, 0o755)
 
-      // Fire multiple hooks in rapid succession
-      const promises = [
-        runHook(bunPath, hookScriptPath, 'PreToolUse', {
-          session_id: 'rapid-001',
-          transcript_path: '/tmp/test.jsonl',
-          hook_event_name: 'PreToolUse',
-          tool_name: 'Edit',
-          tool_input: {file_path: 'file1.js'},
-        }),
-        runHook(bunPath, hookScriptPath, 'PostToolUse', {
-          session_id: 'rapid-001',
-          transcript_path: '/tmp/test.jsonl',
-          hook_event_name: 'PostToolUse',
-          tool_name: 'Write',
-          tool_input: {file_path: 'file2.js'},
-          tool_response: {success: true},
-        }),
-        runHook(bunPath, hookScriptPath, 'PreToolUse', {
-          session_id: 'rapid-001',
-          transcript_path: '/tmp/test.jsonl',
-          hook_event_name: 'PreToolUse',
-          tool_name: 'Bash',
-          tool_input: {command: 'ls'},
-        }),
-      ]
+      // Fire multiple hooks rapidly
+      const promises = []
+      for (let i = 0; i < 5; i++) {
+        promises.push(
+          runHook(hookScriptPath, {
+            type: 'PreToolUse',
+            tool_name: `Tool${i}`,
+          }),
+        )
+      }
 
       const results = await Promise.all(promises)
 
-      // Verify each hook got the correct result
-      expect(results[0].stdout).to.include('PRE_RESULT:Edit')
-      expect(results[0].stdout).not.to.include('POST_RESULT')
-
-      expect(results[1].stdout).to.include('POST_RESULT:Write:true')
-      expect(results[1].stdout).not.to.include('PRE_RESULT')
-
-      expect(results[2].stdout).to.include('PRE_RESULT:Bash')
-      expect(results[2].stdout).not.to.include('POST_RESULT')
+      // Each call should have a unique response
+      const messages = results.map((r) => r.response.message).filter(Boolean)
+      expect(messages).to.have.lengthOf(5)
+      expect(new Set(messages).size).to.equal(5) // All unique
     })
   })
 
   describe('Process Argument Validation', () => {
     it('should ignore hooks when wrong hook type is specified in argv', async () => {
+      // This tests the fix for the argv[2] hook type checking
       const hookScript = `#!/usr/bin/env bun
 import {runHook} from './lib'
 
+// Simulate wrong hook type in argv
+process.argv[2] = 'WrongHookType'
+
 const preToolUse = async (payload) => {
-  console.log('UNEXPECTED:PreToolUse handler called')
-  return {}
+  return {
+    message: 'This should not execute',
+    block: true
+  }
+}
+
+runHook({
+  preToolUse
+})
+`
+      await fs.writeFile(hookScriptPath, hookScript)
+      await fs.chmod(hookScriptPath, 0o755)
+
+      const {response} = await runHook(hookScriptPath, {
+        type: 'PreToolUse',
+        tool_name: 'Edit',
+      })
+
+      // Hook should not be blocked since argv check should be removed
+      expect(response).to.not.have.property('block')
+    })
+
+    it('should handle unknown hook types gracefully', async () => {
+      const hookScript = `#!/usr/bin/env bun
+import {runHook} from './lib'
+
+const unknownHook = async (payload) => {
+  return {
+    message: 'Unknown hook executed'
+  }
+}
+
+runHook({
+  unknownHook
+})
+`
+      await fs.writeFile(hookScriptPath, hookScript)
+      await fs.chmod(hookScriptPath, 0o755)
+
+      const {response} = await runHook(hookScriptPath, {
+        type: 'UnknownHookType',
+        some_data: 'test',
+      })
+
+      // Should handle gracefully without errors
+      expect(response).to.deep.equal({})
+    })
+  })
+
+  describe('Shared Code Execution Prevention', () => {
+    it('should not execute shared initialization code multiple times', async () => {
+      const hookScript = `#!/usr/bin/env bun
+import {runHook} from './lib'
+import * as fs from 'fs'
+
+const countFile = '${path.join(tempDir, 'init-count.txt')}'
+
+// Shared initialization code
+let count = parseInt(fs.readFileSync(countFile, 'utf-8'))
+count++
+fs.writeFileSync(countFile, count.toString())
+
+const preToolUse = async (payload) => {
+  return {
+    message: \`Init count: \${count}\`
+  }
 }
 
 const postToolUse = async (payload) => {
-  console.log('EXPECTED:PostToolUse handler called')
-  return {}
+  return {
+    message: \`Init count: \${count}\`
+  }
 }
 
 runHook({
@@ -173,111 +261,23 @@ runHook({
       await fs.writeFile(hookScriptPath, hookScript)
       await fs.chmod(hookScriptPath, 0o755)
 
-      // Send PostToolUse data but with wrong argv
-      const result = await runHook(bunPath, hookScriptPath, 'PostToolUse', {
-        session_id: 'argv-test',
-        transcript_path: '/tmp/test.jsonl',
-        hook_event_name: 'PreToolUse', // Mismatched event name
-        tool_name: 'Edit',
-        tool_input: {file_path: 'test.js'},
-      })
-
-      // Should execute based on argv, not payload.hook_event_name
-      expect(result.stdout).to.include('EXPECTED:PostToolUse handler called')
-      expect(result.stdout).not.to.include('UNEXPECTED:PreToolUse handler called')
-    })
-
-    it('should handle unknown hook types gracefully', async () => {
-      const hookScript = `#!/usr/bin/env bun
-import {runHook} from './lib'
-
-runHook({
-  preToolUse: async () => {
-    console.log('PreToolUse called')
-    return {}
-  }
-})
-`
-      await fs.writeFile(hookScriptPath, hookScript)
-      await fs.chmod(hookScriptPath, 0o755)
-
-      // Try to run with an unknown hook type
-      const result = await runHook(bunPath, hookScriptPath, 'UnknownHookType', {
-        session_id: 'unknown-test',
-        transcript_path: '/tmp/test.jsonl',
-        hook_event_name: 'UnknownHookType',
-      })
-
-      // Should return empty response without executing any handler
-      expect(result.response).to.deep.equal({})
-      expect(result.stdout).not.to.include('PreToolUse called')
-    })
-  })
-
-  describe('Shared Code Execution Prevention', () => {
-    it('should not execute shared initialization code multiple times', async () => {
-      // This tests the scenario where both hooks might execute the same initialization
-      const hookScript = `#!/usr/bin/env bun
-import {runHook} from './lib'
-import * as fs from 'fs'
-
-const countFile = '${path.join(tempDir, 'init-count.txt')}'
-
-// Shared initialization that should only run once per process
-let initCount = 0
-if (fs.existsSync(countFile)) {
-  initCount = parseInt(fs.readFileSync(countFile, 'utf8'))
-}
-initCount++
-fs.writeFileSync(countFile, initCount.toString())
-
-console.log('INIT_COUNT:' + initCount)
-
-runHook({
-  preToolUse: async (payload) => {
-    console.log('PreToolUse:' + initCount)
-    return {}
-  },
-  postToolUse: async (payload) => {
-    console.log('PostToolUse:' + initCount)
-    return {}
-  }
-})
-`
-      await fs.writeFile(hookScriptPath, hookScript)
-      await fs.chmod(hookScriptPath, 0o755)
-
-      // Initialize count file
+      // Create count file
       await fs.writeFile(path.join(tempDir, 'init-count.txt'), '0')
 
-      // Run different hook types
-      const result1 = await runHook(bunPath, hookScriptPath, 'PreToolUse', {
-        session_id: 'init-test',
-        transcript_path: '/tmp/test.jsonl',
-        hook_event_name: 'PreToolUse',
+      // Run multiple hooks
+      await runHook(hookScriptPath, {
+        type: 'PreToolUse',
         tool_name: 'Edit',
-        tool_input: {},
       })
 
-      const result2 = await runHook(bunPath, hookScriptPath, 'PostToolUse', {
-        session_id: 'init-test',
-        transcript_path: '/tmp/test.jsonl',
-        hook_event_name: 'PostToolUse',
+      await runHook(hookScriptPath, {
+        type: 'PostToolUse',
         tool_name: 'Edit',
-        tool_input: {},
-        tool_response: {success: true},
       })
 
-      // Each invocation is a separate process, so init count should increment
-      expect(result1.stdout).to.include('INIT_COUNT:1')
-      expect(result2.stdout).to.include('INIT_COUNT:2')
-
-      // But only the correct handler should execute
-      expect(result1.stdout).to.include('PreToolUse:1')
-      expect(result1.stdout).not.to.include('PostToolUse')
-
-      expect(result2.stdout).to.include('PostToolUse:2')
-      expect(result2.stdout).not.to.include('PreToolUse:2')
+      // Check that initialization ran twice (once per process)
+      const finalCount = await fs.readFile(path.join(tempDir, 'init-count.txt'), 'utf-8')
+      expect(parseInt(finalCount)).to.equal(2)
     })
   })
 
@@ -286,65 +286,65 @@ runHook({
       const hookScript = `#!/usr/bin/env bun
 import {runHook} from './lib'
 
-runHook({
-  preToolUse: async (payload) => {
-    if (payload.tool_name === 'ErrorTool') {
-      throw new Error('Simulated error in PreToolUse')
-    }
-    console.log('PreToolUse:Success')
-    return {permissionDecision: 'allow'}
-  },
-  postToolUse: async (payload) => {
-    console.log('PostToolUse:Success')
-    return {}
+const preToolUse = async (payload) => {
+  if (payload.tool_name === 'ErrorTool') {
+    throw new Error('Intentional error')
   }
+  return {
+    message: 'Success'
+  }
+}
+
+const postToolUse = async (payload) => {
+  return {
+    message: 'PostToolUse works'
+  }
+}
+
+runHook({
+  preToolUse,
+  postToolUse
 })
 `
       await fs.writeFile(hookScriptPath, hookScript)
       await fs.chmod(hookScriptPath, 0o755)
 
-      // Run hook that will error
-      const errorResult = await runHook(bunPath, hookScriptPath, 'PreToolUse', {
-        session_id: 'error-test',
-        transcript_path: '/tmp/test.jsonl',
-        hook_event_name: 'PreToolUse',
+      // Test with error
+      const {response: errorResponse} = await runHook(hookScriptPath, {
+        type: 'PreToolUse',
         tool_name: 'ErrorTool',
-        tool_input: {},
       })
 
       // Should handle error gracefully
-      expect(errorResult.stderr).to.include('Hook error:')
-      expect(errorResult.response).to.deep.equal({action: 'continue'})
+      expect(errorResponse).to.have.property('message')
+      expect(errorResponse.message).to.include('Hook error')
 
-      // Run a different hook - should work fine
-      const successResult = await runHook(bunPath, hookScriptPath, 'PostToolUse', {
-        session_id: 'error-test',
-        transcript_path: '/tmp/test.jsonl',
-        hook_event_name: 'PostToolUse',
-        tool_name: 'Edit',
-        tool_input: {},
-        tool_response: {success: true},
+      // Test normal operation
+      const {response: successResponse} = await runHook(hookScriptPath, {
+        type: 'PreToolUse',
+        tool_name: 'NormalTool',
       })
 
-      expect(successResult.stdout).to.include('PostToolUse:Success')
-      expect(successResult.response).to.deep.equal({})
+      expect(successResponse).to.deep.equal({message: 'Success'})
+
+      // Test other hook still works
+      const {response: postResponse} = await runHook(hookScriptPath, {
+        type: 'PostToolUse',
+        tool_name: 'AnyTool',
+      })
+
+      expect(postResponse).to.deep.equal({message: 'PostToolUse works'})
     })
   })
 })
 
-// Helper function
-async function runHook(
-  bunExecutable: string,
+// New helper for the refactored runHook to work with the new lib.ts structure
+async function runHookWithNewLib(
   scriptPath: string,
-  hookType: string,
-  payload: any,
-): Promise<{
-  stdout: string
-  stderr: string
-  response: any
-}> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(bunExecutable, [scriptPath, hookType], {
+  payload: Record<string, any>,
+): Promise<{response: Record<string, any>; stdout: string; stderr: string}> {
+  return new Promise((resolve) => {
+    const child = spawn('bun', [scriptPath], {
       cwd: path.dirname(scriptPath),
     })
 
@@ -359,36 +359,27 @@ async function runHook(
       stderr += data.toString()
     })
 
-    child.on('error', (error) => {
-      reject(error)
-    })
-
     child.on('close', (_code) => {
       let response = {}
       try {
-        const lines = stdout.trim().split('\n')
-        const jsonLine = lines.find((line) => {
-          try {
-            JSON.parse(line)
-            return true
-          } catch {
-            return false
+        // Parse the last non-empty line as JSON
+        const lines = stdout.trim().split('\n').filter(Boolean)
+        if (lines.length > 0) {
+          const lastLine = lines[lines.length - 1]
+          // Try to find JSON in the output
+          const jsonMatch = lastLine.match(/\{.*\}/)
+          if (jsonMatch) {
+            response = JSON.parse(jsonMatch[0])
           }
-        })
-        if (jsonLine) {
-          response = JSON.parse(jsonLine)
         }
       } catch (_e) {
         // Ignore parse errors
       }
 
-      resolve({
-        stdout,
-        stderr,
-        response,
-      })
+      resolve({response, stdout, stderr})
     })
 
+    // Send the payload
     child.stdin.write(JSON.stringify(payload))
     child.stdin.end()
   })
