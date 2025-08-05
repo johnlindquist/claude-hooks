@@ -1,19 +1,20 @@
 import * as path from 'node:path'
 import {fileURLToPath} from 'node:url'
+import {execSync} from 'node:child_process'
+import {expect} from 'chai'
+import fs from 'fs-extra'
+import * as os from 'node:os'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// Skip smoke tests for now - they need to be updated for bun test compatibility
-// TODO: Update these tests to use bun:test syntax instead of mocha
-/*
-describe.skip('Smoke Tests - Generated Files', () => {
-  const testDir = path.join(__dirname, '..', '..', 'test-smoke-output')
+describe('Smoke Tests - Generated Files', () => {
+  let testDir: string
   const binPath = path.join(__dirname, '..', '..', 'bin', 'run.js')
 
   before(async () => {
-    // Set up once for all smoke tests
-    await fs.remove(testDir)
+    // Create isolated test directory
+    testDir = path.join(os.tmpdir(), `claude-hooks-smoke-${Date.now()}`)
     await fs.ensureDir(testDir)
 
     // Generate hooks
@@ -35,24 +36,25 @@ describe.skip('Smoke Tests - Generated Files', () => {
       expect(settings).to.be.an('object')
       expect(settings.hooks).to.be.an('object')
 
-      // Check hook structure
-      const hookTypes = [
-        'Notification',
-        'Stop',
-        'PreToolUse',
-        'PostToolUse',
-        'SubagentStop',
-        'UserPromptSubmit',
-        'PreCompact',
-      ]
+      // Check hook structure for new format
+      const hookTypes = ['PreToolUse', 'PostToolUse', 'Notification', 'Stop', 'SessionStart']
       for (const hookType of hookTypes) {
-        expect(settings.hooks[hookType]).to.be.an('array')
-        expect(settings.hooks[hookType][0]).to.have.property('matcher', '')
-        expect(settings.hooks[hookType][0].hooks[0]).to.deep.equal({
-          type: 'command',
-          command: `bun .claude/hooks/index.ts ${hookType}`,
-        })
+        expect(settings.hooks[hookType]).to.be.an('object')
+        expect(settings.hooks[hookType]).to.have.property('command')
+        expect(settings.hooks[hookType]).to.have.property('args')
+        expect(settings.hooks[hookType].args).to.be.an('array')
+        expect(settings.hooks[hookType].args[0]).to.include('index.ts')
       }
+    })
+
+    it('should use absolute bun path in commands', async () => {
+      const settingsPath = path.join(testDir, '.claude/settings.json')
+      const settings = await fs.readJson(settingsPath)
+
+      const bunCommand = settings.hooks.PreToolUse.command
+      expect(bunCommand).to.satisfy((cmd: string) => 
+        path.isAbsolute(cmd) || cmd === 'bun'
+      )
     })
   })
 
@@ -69,60 +71,34 @@ describe.skip('Smoke Tests - Generated Files', () => {
     })
 
     it('should import required functions from lib', () => {
-      expect(indexContent).to.include('import {')
-      expect(indexContent).to.include('runHook')
+      expect(indexContent).to.include('import')
+      expect(indexContent).to.include('runHooks')
+      expect(indexContent).to.include('HookHandler')
       expect(indexContent).to.include("from './lib'")
-      expect(indexContent).to.include("from './session'")
     })
 
-    it('should not create sessions directory locally', () => {
-      expect(indexContent).not.to.include("await mkdir('.claude/hooks/sessions'")
+    it('should define handler functions with correct types', () => {
+      expect(indexContent).to.match(/export const PreToolUse:\s*HookHandler/)
+      expect(indexContent).to.match(/export const PostToolUse:\s*HookHandler/)
+      expect(indexContent).to.match(/export const Notification:\s*HookHandler/)
+      expect(indexContent).to.match(/export const Stop:\s*HookHandler/)
+      expect(indexContent).to.match(/export const SessionStart:\s*HookHandler/)
     })
 
-    it('should define all handler functions', () => {
-      expect(indexContent).to.match(/async\s+function\s+preToolUse/)
-      expect(indexContent).to.match(/async\s+function\s+postToolUse/)
-      expect(indexContent).to.match(/async\s+function\s+notification/)
-      expect(indexContent).to.match(/async\s+function\s+stop/)
-      expect(indexContent).to.match(/async\s+function\s+subagentStop/)
-      expect(indexContent).to.match(/async\s+function\s+userPromptSubmit/)
-      expect(indexContent).to.match(/async\s+function\s+preCompact/)
-    })
-
-    it('should save session data in all handlers', () => {
-      expect(indexContent).to.match(/await saveSessionData\('PreToolUse', \{\.\.\.payload, hook_type: 'PreToolUse'\}/)
-      expect(indexContent).to.match(/await saveSessionData\('PostToolUse', \{\.\.\.payload, hook_type: 'PostToolUse'\}/)
-      expect(indexContent).to.match(
-        /await saveSessionData\('Notification', \{\.\.\.payload, hook_type: 'Notification'\}/,
-      )
-      expect(indexContent).to.match(/await saveSessionData\('Stop', \{\.\.\.payload, hook_type: 'Stop'\}/)
-      expect(indexContent).to.match(
-        /await saveSessionData\('SubagentStop', \{\.\.\.payload, hook_type: 'SubagentStop'\}/,
-      )
-      expect(indexContent).to.match(
-        /await saveSessionData\('UserPromptSubmit', \{\.\.\.payload, hook_type: 'UserPromptSubmit'\}/,
-      )
-      expect(indexContent).to.match(/await saveSessionData\('PreCompact', \{\.\.\.payload, hook_type: 'PreCompact'\}/)
-    })
-
-    it('should include helpful examples for TypeScript convenience', () => {
-      expect(indexContent).to.include("payload.tool_name === 'Edit'")
+    it('should include helpful examples', () => {
+      expect(indexContent).to.include("toolName === 'Edit'")
       expect(indexContent).to.include('📝 Claude is editing:')
+      expect(indexContent).to.include("toolName === 'Bash'")
       expect(indexContent).to.include('🚀 Running command:')
-      expect(indexContent).to.include('💬 User prompt:')
-      expect(indexContent).to.include('🗜️  Compact triggered:')
-      expect(indexContent).to.include('// Add your custom logic here!')
     })
 
-    it('should call runHook with all handlers', () => {
-      expect(indexContent).to.include('runHook({')
-      expect(indexContent).to.include('preToolUse,')
-      expect(indexContent).to.include('postToolUse,')
-      expect(indexContent).to.include('notification,')
-      expect(indexContent).to.include('stop')
-      expect(indexContent).to.include('subagentStop')
-      expect(indexContent).to.include('userPromptSubmit')
-      expect(indexContent).to.include('preCompact')
+    it('should call runHooks with all handlers', () => {
+      expect(indexContent).to.include('runHooks({')
+      expect(indexContent).to.include('PreToolUse')
+      expect(indexContent).to.include('PostToolUse')
+      expect(indexContent).to.include('Notification')
+      expect(indexContent).to.include('Stop')
+      expect(indexContent).to.include('SessionStart')
     })
   })
 
@@ -134,50 +110,85 @@ describe.skip('Smoke Tests - Generated Files', () => {
       libContent = await fs.readFile(libPath, 'utf8')
     })
 
-    it('should define all required types', () => {
-      expect(libContent).to.include('export interface PreToolUsePayload')
-      expect(libContent).to.include('export interface PostToolUsePayload')
-      expect(libContent).to.include('export interface NotificationPayload')
-      expect(libContent).to.include('export interface StopPayload')
-      expect(libContent).to.include('export interface SubagentStopPayload')
-      expect(libContent).to.include('export interface UserPromptSubmitPayload')
-      expect(libContent).to.include('export interface PreCompactPayload')
-      expect(libContent).to.include('export interface HookResponse')
-      expect(libContent).to.include('export interface BashToolInput')
+    it('should define HookArgs interface with all hook types', () => {
+      expect(libContent).to.include('export interface HookArgs')
+      expect(libContent).to.include("type: 'PreToolUse' | 'PostToolUse' | 'Notification' | 'Stop' | 'SessionStart'")
+      expect(libContent).to.include('toolName?: string')
+      expect(libContent).to.include('toolArgs?: unknown')
+      expect(libContent).to.include('toolResult?: unknown')
+      expect(libContent).to.include('message?: string')
+      expect(libContent).to.include('sessionId?: string')
     })
 
-    it('should export utility functions', () => {
-      expect(libContent).to.include('export function log')
-      expect(libContent).to.include('export function runHook')
+    it('should define HookResult interface', () => {
+      expect(libContent).to.include('export interface HookResult')
+      expect(libContent).to.include('block?: boolean')
+      expect(libContent).to.include('message?: string')
+      expect(libContent).to.include('toolArgs?: unknown')
     })
 
-    it('should handle stdin for hook communication', () => {
+    it('should export transcript utility functions', () => {
+      expect(libContent).to.include('export function getTranscript()')
+      expect(libContent).to.include('export function getTranscriptStream()')
+      expect(libContent).to.include('export function searchTranscript(')
+      expect(libContent).to.include('export function getLastNMessages(')
+      expect(libContent).to.include('export function findToolUsage(')
+    })
+
+    it('should implement robust STDIN handling', () => {
       expect(libContent).to.include("process.stdin.on('data'")
-      expect(libContent).to.include('JSON.parse(data.toString())')
-      expect(libContent).to.include('JSON.stringify')
+      expect(libContent).to.include("process.stdin.on('end'")
+      expect(libContent).to.include('inputBuffer +=')
+      expect(libContent).to.include('JSON.parse(inputBuffer)')
+    })
+
+    it('should include transcript caching', () => {
+      expect(libContent).to.include('transcriptCache')
+      expect(libContent).to.include('CACHE_TTL')
+      expect(libContent).to.include('lastRead')
     })
   })
 
   describe('session.ts', () => {
-    it('should exist with saveSessionData function', async () => {
+    it('should exist with session tracking utilities', async () => {
       const sessionPath = path.join(testDir, '.claude/hooks/session.ts')
+      const exists = await fs.pathExists(sessionPath)
+      expect(exists).to.be.true
+      
       const content = await fs.readFile(sessionPath, 'utf8')
-
-      expect(content).to.include('export async function saveSessionData')
-      expect(content).to.include('tmpdir()')
-      expect(content).to.include('claude-hooks-sessions')
-      expect(content).to.include('JSON.stringify(sessionData, null, 2)')
+      expect(content).to.include('export')
     })
   })
 
-  describe('directory structure', () => {
-    it('should have correct file permissions', async () => {
-      const indexPath = path.join(testDir, '.claude/hooks/index.ts')
-      const stats = await fs.stat(indexPath)
+  describe('Runtime execution test', () => {
+    it('should handle PreToolUse hook without errors', async () => {
+      const hooksPath = path.join(testDir, '.claude/hooks/index.ts')
+      const testInput = JSON.stringify({
+        type: 'PreToolUse',
+        toolName: 'Edit',
+        toolArgs: { file_path: 'test.js', old_string: 'foo', new_string: 'bar' }
+      })
 
-      // Check that file is readable
-      expect(stats.mode & 0o400).to.be.above(0)
+      try {
+        const output = execSync(`bun ${hooksPath}`, {
+          input: testInput,
+          encoding: 'utf8',
+          stdio: ['pipe', 'pipe', 'pipe']
+        })
+        
+        // Should either return empty (no blocking) or valid JSON
+        if (output.trim()) {
+          const result = JSON.parse(output)
+          expect(result).to.be.an('object')
+        }
+      } catch (error: any) {
+        // If bun is not available, skip this test
+        if (error.message.includes('bun: not found') || error.message.includes('bun: command not found')) {
+          this.skip()
+        } else {
+          throw error
+        }
+      }
     })
   })
 })
-*/
