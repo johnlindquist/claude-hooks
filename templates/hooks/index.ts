@@ -8,13 +8,13 @@ export const PreToolUse: HookHandler = (args) => {
   // Example: Log when Claude is about to edit files
   if (args.toolName === 'Edit' && args.toolArgs) {
     const {file_path} = args.toolArgs as {file_path: string}
-    console.log(`📝 Claude is editing: ${file_path}`)
+    console.error(`📝 Claude is editing: ${file_path}`)
   }
 
   // Example: Block dangerous bash commands
   if (args.toolName === 'Bash' && args.toolArgs) {
     const {command} = args.toolArgs as {command: string}
-    console.log(`🚀 Running command: ${command}`)
+    console.error(`🚀 Running command: ${command}`)
 
     // Block dangerous commands
     if (command.includes('rm -rf /') || command.includes('rm -rf ~')) {
@@ -32,7 +32,7 @@ export const PreToolUse: HookHandler = (args) => {
 export const PostToolUse: HookHandler = (args) => {
   // Example: React to successful file writes
   if (args.toolName === 'Write' && args.toolResult) {
-    console.log('✅ File written successfully!')
+    console.error('✅ File written successfully!')
   }
 
   // Add your custom post-processing logic here
@@ -41,26 +41,26 @@ export const PostToolUse: HookHandler = (args) => {
 // Notification handler - receive Claude's notifications
 export const Notification: HookHandler = (args) => {
   if (args.message) {
-    console.log(`🔔 ${args.severity || 'info'}: ${args.message}`)
+    console.error(`🔔 ${args.severity || 'info'}: ${args.message}`)
   }
 }
 
 // Stop handler - called when Claude stops
 export const Stop: HookHandler = (_args) => {
-  console.log('👋 Session ended')
+  console.error('👋 Session ended')
   // Add cleanup logic here if needed
 }
 
 // SessionStart handler - called when a new session starts
 export const SessionStart: HookHandler = (args) => {
-  console.log(`🚀 New session started: ${args.sessionId}`)
+  console.error(`🚀 New session started: ${args.sessionId}`)
 
   if (args.workingDirectory) {
-    console.log(`📍 Working directory: ${args.workingDirectory}`)
+    console.error(`📍 Working directory: ${args.workingDirectory}`)
   }
 
   if (args.isPlanMode) {
-    console.log('📋 Plan mode is active')
+    console.error('📋 Plan mode is active')
   }
 
   // Add your session initialization logic here
