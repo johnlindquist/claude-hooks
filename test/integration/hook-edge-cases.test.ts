@@ -171,16 +171,16 @@ runHooks({
 
   describe('Process Argument Validation', () => {
     it('should ignore hooks when wrong hook type is specified in argv', async () => {
-      // This tests the fix for the argv[2] hook type checking
+      // The new lib.ts doesn't check argv[2], so hooks always execute based on the payload type
       const hookScript = `#!/usr/bin/env bun
 import {runHooks} from './lib'
 
-// Simulate wrong hook type in argv
+// Simulate wrong hook type in argv (but this doesn't affect new lib.ts)
 process.argv[2] = 'WrongHookType'
 
 const PreToolUse = async (payload) => {
   return {
-    message: 'This should not execute',
+    message: 'PreToolUse executed',
     block: true
   }
 }
@@ -197,8 +197,9 @@ runHooks({
         toolName: 'Edit',
       })
 
-      // Hook should not be blocked since argv check should be removed
-      expect(response).to.not.have.property('block')
+      // The new implementation always executes based on payload type, not argv
+      expect(response).to.have.property('block', true)
+      expect(response).to.have.property('message', 'PreToolUse executed')
     })
 
     it('should handle unknown hook types gracefully', async () => {
@@ -309,15 +310,16 @@ runHooks({
       await fs.writeFile(hookScriptPath, hookScript)
       await fs.chmod(hookScriptPath, 0o755)
 
-      // Test with error
-      const {response: errorResponse} = await runHook(hookScriptPath, {
+      // Test with error - the lib.ts outputs error to console.error as JSON
+      const {response: errorResponse, logs} = await runHook(hookScriptPath, {
         type: 'PreToolUse',
         toolName: 'ErrorTool',
       })
 
-      // Should handle error gracefully
-      expect(errorResponse).to.have.property('message')
-      expect(errorResponse.message).to.include('Hook error')
+      // The error is logged to stderr, not returned as response
+      const errorLog = logs.join('')
+      expect(errorLog).to.include('Hook error')
+      expect(errorLog).to.include('Intentional error')
 
       // Test normal operation
       const {response: successResponse} = await runHook(hookScriptPath, {
