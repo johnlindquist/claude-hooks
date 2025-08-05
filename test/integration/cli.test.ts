@@ -63,7 +63,7 @@ describe('CLI Integration Tests', () => {
           cwd: testDir,
           encoding: 'utf8',
         })
-      } catch (error) {
+      } catch (error: any) {
         errorThrown = true
         expect(error.message).to.include('Hooks already exist')
       }
