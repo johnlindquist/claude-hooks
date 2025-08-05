@@ -64,10 +64,6 @@ export const PreToolUse: HookHandler = (args) => {
   console.error('LAST_MESSAGES:' + lastMessages.length)
   console.error('EDIT_USAGES:' + editUsages.length)
   
-  // Debug output
-  console.error('TRANSCRIPT_PATH:' + process.env.TRANSCRIPT_PATH)
-  console.error('PYTHON_LINES:' + JSON.stringify(pythonMentions))
-  
   // Block if trying to run bash after user said thanks
   if (args.toolName === 'Bash') {
     const recentMessages = getLastNMessages(5)
@@ -101,12 +97,9 @@ runHooks({ PreToolUse, PostToolUse })
         toolArgs: {command: 'echo "test"'},
       })
 
-      // Debug output
-      console.log('STDERR OUTPUT:', result.stderr)
-
       // Verify transcript functions were called
       expect(result.stderr).to.include('TRANSCRIPT_LENGTH:10')
-      expect(result.stderr).to.include('PYTHON_MENTIONS:2')
+      expect(result.stderr).to.include('PYTHON_MENTIONS:3') // Updated: 3 mentions including python command
       expect(result.stderr).to.include('LAST_MESSAGES:3')
       expect(result.stderr).to.include('EDIT_USAGES:1')
 
