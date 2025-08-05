@@ -1,10 +1,10 @@
 import {execSync} from 'node:child_process'
+import * as os from 'node:os'
 import * as path from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {runCommand} from '@oclif/test'
 import {expect} from 'chai'
 import fs from 'fs-extra'
-import * as os from 'node:os'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -17,11 +17,11 @@ describe('init', () => {
   beforeEach(async () => {
     // Save original CWD
     originalCwd = process.cwd()
-    
+
     // Create isolated test directory
     testDir = path.join(os.tmpdir(), `claude-hooks-test-${Date.now()}-${Math.random().toString(36).substring(7)}`)
     await fs.ensureDir(testDir)
-    
+
     // Change to test directory
     process.chdir(testDir)
   })
@@ -29,7 +29,7 @@ describe('init', () => {
   afterEach(async () => {
     // Restore original CWD
     process.chdir(originalCwd)
-    
+
     // Clean up test directory
     await fs.remove(testDir)
   })
@@ -57,9 +57,9 @@ describe('init', () => {
         cwd: testDir,
         encoding: 'utf8',
       })
-      
+
       expect(output).to.contain('Claude hooks initialized successfully!')
-      
+
       // Check that all files were created
       expect(await fs.pathExists(path.join(testDir, '.claude/settings.json'))).to.be.true
       expect(await fs.pathExists(path.join(testDir, '.claude/hooks/index.ts'))).to.be.true
@@ -94,11 +94,9 @@ describe('init', () => {
 
       const settings = await fs.readJson(path.join(testDir, '.claude/settings.json'))
       const bunCommand = settings.hooks.PreToolUse.command
-      
+
       // Should be either an absolute path or 'bun' if it's in PATH
-      expect(bunCommand).to.satisfy((cmd: string) => 
-        path.isAbsolute(cmd) || cmd === 'bun'
-      )
+      expect(bunCommand).to.satisfy((cmd: string) => path.isAbsolute(cmd) || cmd === 'bun')
     })
   })
 
@@ -121,7 +119,7 @@ describe('init', () => {
         errorOccurred = true
         expect(error.message).to.contain('Hooks already exist')
       }
-      
+
       expect(errorOccurred).to.be.true
     })
 
@@ -143,7 +141,7 @@ describe('init', () => {
       })
 
       expect(output).to.contain('Claude hooks initialized successfully!')
-      
+
       // Check file was overwritten
       const content = await fs.readFile(indexPath, 'utf8')
       expect(content).to.contain('import')

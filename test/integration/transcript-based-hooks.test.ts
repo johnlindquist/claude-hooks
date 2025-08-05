@@ -1,9 +1,9 @@
-import {expect} from 'chai'
 import {spawn} from 'node:child_process'
-import * as fs from 'fs-extra'
+import {tmpdir} from 'node:os'
 import * as path from 'node:path'
 import {fileURLToPath} from 'node:url'
-import {tmpdir} from 'node:os'
+import {expect} from 'chai'
+import * as fs from 'fs-extra'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -13,7 +13,7 @@ const SAMPLE_TRANSCRIPT = [
   {
     type: 'summary',
     summary: 'User asking about implementing a feature',
-    leafUuid: 'abc123'
+    leafUuid: 'abc123',
   },
   {
     parentUuid: null,
@@ -26,10 +26,10 @@ const SAMPLE_TRANSCRIPT = [
     type: 'user',
     message: {
       role: 'user',
-      content: 'Help me implement a login feature'
+      content: 'Help me implement a login feature',
     },
     uuid: 'msg-001',
-    timestamp: '2024-01-01T10:00:00Z'
+    timestamp: '2024-01-01T10:00:00Z',
   },
   {
     parentUuid: 'msg-001',
@@ -47,16 +47,16 @@ const SAMPLE_TRANSCRIPT = [
       content: [
         {
           type: 'text',
-          text: 'I\'ll help you implement a login feature. Let me first check your existing code.'
+          text: "I'll help you implement a login feature. Let me first check your existing code.",
         },
         {
           type: 'tool_use',
           id: 'tool-001',
           name: 'Read',
           input: {
-            file_path: '/Users/test/project/src/auth.js'
-          }
-        }
+            file_path: '/Users/test/project/src/auth.js',
+          },
+        },
       ],
       stop_reason: null,
       stop_sequence: null,
@@ -65,14 +65,14 @@ const SAMPLE_TRANSCRIPT = [
         cache_creation_input_tokens: 0,
         cache_read_input_tokens: 0,
         output_tokens: 50,
-        service_tier: 'standard'
-      }
+        service_tier: 'standard',
+      },
     },
     requestId: 'req-001',
     type: 'assistant',
     uuid: 'msg-002',
-    timestamp: '2024-01-01T10:00:05Z'
-  }
+    timestamp: '2024-01-01T10:00:05Z',
+  },
 ]
 
 describe('Transcript-Based Hook Tests', () => {
@@ -84,21 +84,21 @@ describe('Transcript-Based Hook Tests', () => {
   beforeEach(async () => {
     tempDir = path.join(tmpdir(), `claude-hooks-transcript-${Date.now()}`)
     await fs.ensureDir(tempDir)
-    
+
     const hooksDir = path.join(tempDir, '.claude', 'hooks')
     await fs.ensureDir(hooksDir)
-    
+
     const templatesDir = path.join(__dirname, '..', '..', 'templates', 'hooks')
     await fs.copy(path.join(templatesDir, 'lib.ts'), path.join(hooksDir, 'lib.ts'))
     await fs.copy(path.join(templatesDir, 'session.ts'), path.join(hooksDir, 'session.ts'))
-    
+
     hookScriptPath = path.join(hooksDir, 'index.ts')
-    
+
     // Create a sample transcript file
     transcriptPath = path.join(tempDir, 'transcript.jsonl')
-    const transcriptContent = SAMPLE_TRANSCRIPT.map(msg => JSON.stringify(msg)).join('\n')
+    const transcriptContent = SAMPLE_TRANSCRIPT.map((msg) => JSON.stringify(msg)).join('\n')
     await fs.writeFile(transcriptPath, transcriptContent)
-    
+
     // Find bun executable
     bunPath = process.env.HOME ? path.join(process.env.HOME, '.bun/bin/bun') : 'bun'
   })
@@ -153,7 +153,7 @@ runHook(handlers)
         transcript_path: transcriptPath,
         hook_event_name: 'PreToolUse',
         tool_name: 'Edit',
-        tool_input: {file_path: 'test.js'}
+        tool_input: {file_path: 'test.js'},
       })
 
       expect(preResult.stdout).to.include('PreToolUse:START')
@@ -166,7 +166,7 @@ runHook(handlers)
         session_id: 'transcript-test',
         transcript_path: transcriptPath,
         hook_event_name: 'UserPromptSubmit',
-        prompt: 'Add error handling'
+        prompt: 'Add error handling',
       })
 
       expect(promptResult.stdout).to.include('UserPromptSubmit:START')
@@ -229,7 +229,7 @@ runHook(handlers)
         transcript_path: transcriptPath,
         hook_event_name: 'PreToolUse',
         tool_name: 'Bash',
-        tool_input: {command: 'npm test'}
+        tool_input: {command: 'npm test'},
       })
 
       expect(result.stdout).to.include('PreToolUse:Depth:1')
@@ -291,7 +291,7 @@ runHook(handlers)
         transcript_path: transcriptPath,
         hook_event_name: 'PreToolUse',
         tool_name: 'Edit',
-        tool_input: {file_path: 'test.js'}
+        tool_input: {file_path: 'test.js'},
       })
 
       // Run PostToolUse with same tool
@@ -301,11 +301,11 @@ runHook(handlers)
         hook_event_name: 'PostToolUse',
         tool_name: 'Edit',
         tool_input: {file_path: 'test.js'},
-        tool_response: {success: true}
+        tool_response: {success: true},
       })
 
       expect(postResult.stdout).not.to.include('ERROR:SHARED_STATE_CONTAMINATION')
-      
+
       // Verify final state
       const finalState = await fs.readJson(stateFile)
       expect(finalState.preCount).to.equal(1)
@@ -317,14 +317,19 @@ runHook(handlers)
 })
 
 // Helper function
-async function runHook(bunExecutable: string, scriptPath: string, hookType: string, payload: any): Promise<{
+async function runHook(
+  bunExecutable: string,
+  scriptPath: string,
+  hookType: string,
+  payload: any,
+): Promise<{
   stdout: string
   stderr: string
   response: any
 }> {
   return new Promise((resolve, reject) => {
     const child = spawn(bunExecutable, [scriptPath, hookType], {
-      cwd: path.dirname(scriptPath)
+      cwd: path.dirname(scriptPath),
     })
 
     let stdout = ''
@@ -346,7 +351,7 @@ async function runHook(bunExecutable: string, scriptPath: string, hookType: stri
       let response = {}
       try {
         const lines = stdout.trim().split('\n')
-        const jsonLine = lines.find(line => {
+        const jsonLine = lines.find((line) => {
           try {
             JSON.parse(line)
             return true
@@ -364,7 +369,7 @@ async function runHook(bunExecutable: string, scriptPath: string, hookType: stri
       resolve({
         stdout,
         stderr,
-        response
+        response,
       })
     })
 

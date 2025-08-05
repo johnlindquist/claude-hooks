@@ -1,8 +1,8 @@
-import { Command, Flags } from '@oclif/core'
+import {execSync} from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { execSync } from 'node:child_process'
+import {fileURLToPath} from 'node:url'
+import {Command, Flags} from '@oclif/core'
 
 export default class Init extends Command {
   static override description = 'Initialize Claude hooks in your project'
@@ -29,7 +29,7 @@ export default class Init extends Command {
   private readonly HOOK_TYPES = ['PreToolUse', 'PostToolUse', 'Notification', 'Stop', 'SessionStart'] as const
 
   public async run(): Promise<void> {
-    const { flags } = await this.parse(Init)
+    const {flags} = await this.parse(Init)
 
     const claudeDir = path.join(process.cwd(), '.claude')
     const hooksDir = path.join(claudeDir, 'hooks')
@@ -65,7 +65,7 @@ export default class Init extends Command {
 
   private createDirectories(directories: string[]): void {
     for (const dir of directories) {
-      fs.mkdirSync(dir, { recursive: true })
+      fs.mkdirSync(dir, {recursive: true})
     }
   }
 
@@ -79,7 +79,7 @@ export default class Init extends Command {
     for (const file of filesToCopy) {
       const sourcePath = path.join(templatesDir, file)
       const destPath = path.join(hooksDir, file)
-      
+
       try {
         fs.copyFileSync(sourcePath, destPath)
       } catch (error) {
@@ -100,7 +100,7 @@ export default class Init extends Command {
     for (const bunPath of commonPaths) {
       if (fs.existsSync(bunPath)) {
         try {
-          execSync(`"${bunPath}" --version`, { stdio: 'ignore' })
+          execSync(`"${bunPath}" --version`, {stdio: 'ignore'})
           return bunPath
         } catch {
           // Continue to next path
@@ -111,7 +111,7 @@ export default class Init extends Command {
     // Try to find Bun using 'which' or 'where' command
     try {
       const cmd = process.platform === 'win32' ? 'where' : 'which'
-      const result = execSync(`${cmd} bun`, { encoding: 'utf-8' }).trim()
+      const result = execSync(`${cmd} bun`, {encoding: 'utf-8'}).trim()
       if (result) {
         return result.split('\n')[0] // Take first result on Windows
       }
@@ -121,7 +121,7 @@ export default class Init extends Command {
 
     // Last resort: check if 'bun' command works directly
     try {
-      execSync('bun --version', { stdio: 'ignore' })
+      execSync('bun --version', {stdio: 'ignore'})
       return 'bun' // Use just 'bun' if it's in PATH
     } catch {
       return null
@@ -130,13 +130,16 @@ export default class Init extends Command {
 
   private createSettingsFile(settingsPath: string, hooksDir: string, bunPath: string): void {
     const settings = {
-      hooks: this.HOOK_TYPES.reduce((acc, hookType) => {
-        acc[hookType] = {
-          command: bunPath,
-          args: [path.join(hooksDir, 'index.ts')],
-        }
-        return acc
-      }, {} as Record<string, { command: string; args: string[] }>),
+      hooks: this.HOOK_TYPES.reduce(
+        (acc, hookType) => {
+          acc[hookType] = {
+            command: bunPath,
+            args: [path.join(hooksDir, 'index.ts')],
+          }
+          return acc
+        },
+        {} as Record<string, {command: string; args: string[]}>,
+      ),
     }
 
     try {

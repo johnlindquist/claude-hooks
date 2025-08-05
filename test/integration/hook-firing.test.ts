@@ -1,9 +1,9 @@
-import {expect} from 'chai'
 import {spawn} from 'node:child_process'
-import * as fs from 'fs-extra'
+import {tmpdir} from 'node:os'
 import * as path from 'node:path'
 import {fileURLToPath} from 'node:url'
-import {tmpdir} from 'node:os'
+import {expect} from 'chai'
+import * as fs from 'fs-extra'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -18,8 +18,8 @@ const MOCK_DATA = {
     tool_input: {
       file_path: '/test/file.ts',
       old_string: 'console.log("old")',
-      new_string: 'console.log("new")'
-    }
+      new_string: 'console.log("new")',
+    },
   },
   postToolUse: {
     session_id: 'test-session-001',
@@ -29,32 +29,32 @@ const MOCK_DATA = {
     tool_input: {
       file_path: '/test/file.ts',
       old_string: 'console.log("old")',
-      new_string: 'console.log("new")'
+      new_string: 'console.log("new")',
     },
     tool_response: {
       success: true,
-      file_path: '/test/file.ts'
-    }
+      file_path: '/test/file.ts',
+    },
   },
   notification: {
     session_id: 'test-session-001',
     transcript_path: '/tmp/claude-transcript.jsonl',
     hook_event_name: 'Notification',
     message: 'Working on the task...',
-    title: 'Progress Update'
+    title: 'Progress Update',
   },
   userPromptSubmit: {
     session_id: 'test-session-001',
     transcript_path: '/tmp/claude-transcript.jsonl',
     hook_event_name: 'UserPromptSubmit',
-    prompt: 'Please run the tests'
+    prompt: 'Please run the tests',
   },
   sessionStart: {
     session_id: 'test-session-001',
     transcript_path: '/tmp/claude-transcript.jsonl',
     hook_event_name: 'SessionStart',
-    source: 'cli'
-  }
+    source: 'cli',
+  },
 }
 
 describe('Hook Firing Integration Tests', () => {
@@ -67,23 +67,23 @@ describe('Hook Firing Integration Tests', () => {
     // Create a temporary directory for the test
     tempDir = path.join(tmpdir(), `claude-hooks-test-${Date.now()}`)
     await fs.ensureDir(tempDir)
-    
+
     // Create session directory
     sessionDir = path.join(tmpdir(), 'claude-hooks-sessions')
     await fs.ensureDir(sessionDir)
-    
+
     // Copy hook files for testing
     const hooksDir = path.join(tempDir, '.claude', 'hooks')
     await fs.ensureDir(hooksDir)
-    
+
     // Copy the template files
     const templatesDir = path.join(__dirname, '..', '..', 'templates', 'hooks')
     await fs.copy(path.join(templatesDir, 'lib.ts'), path.join(hooksDir, 'lib.ts'))
     await fs.copy(path.join(templatesDir, 'session.ts'), path.join(hooksDir, 'session.ts'))
-    
+
     // We'll create custom hook handlers for each test
     hookScriptPath = path.join(hooksDir, 'index.ts')
-    
+
     // Find bun executable
     bunPath = process.env.HOME ? path.join(process.env.HOME, '.bun/bin/bun') : 'bun'
   })
@@ -132,7 +132,7 @@ runHook({
 
       // Run the hook with PreToolUse event
       const result = await runHook(bunPath, hookScriptPath, 'PreToolUse', MOCK_DATA.preToolUse)
-      
+
       // Should only see PreToolUse handler called
       expect(result.stdout).to.include('HANDLER:PreToolUse')
       expect(result.stdout).not.to.include('HANDLER:PostToolUse')
@@ -163,7 +163,7 @@ runHook({
 
       // Run the hook with PostToolUse event
       const result = await runHook(bunPath, hookScriptPath, 'PostToolUse', MOCK_DATA.postToolUse)
-      
+
       // Should only see PostToolUse handler called
       expect(result.stdout).not.to.include('HANDLER:PreToolUse')
       expect(result.stdout).to.include('HANDLER:PostToolUse')
@@ -189,7 +189,7 @@ runHook({
 
       // Run PostToolUse event when handler is missing
       const result = await runHook(bunPath, hookScriptPath, 'PostToolUse', MOCK_DATA.postToolUse)
-      
+
       // Should not crash, should return empty response
       expect(result.stdout).not.to.include('HANDLER:PreToolUse')
       expect(result.response).to.deep.equal({})
@@ -228,10 +228,10 @@ runHook({
 
       // Run PreToolUse first
       await runHook(bunPath, hookScriptPath, 'PreToolUse', MOCK_DATA.preToolUse)
-      
+
       // Run PostToolUse - should have its own data
       const result = await runHook(bunPath, hookScriptPath, 'PostToolUse', MOCK_DATA.postToolUse)
-      
+
       // Should not see error message about contaminated data
       expect(result.stdout).not.to.include('ERROR: PostToolUse received PreToolUse data!')
     })
@@ -312,14 +312,14 @@ runHook({
       const preResult = await runHook(bunPath, hookScriptPath, 'PreToolUse', MOCK_DATA.preToolUse)
       expect(preResult.response).to.deep.equal({
         permissionDecision: 'deny',
-        permissionDecisionReason: 'Test denial'
+        permissionDecisionReason: 'Test denial',
       })
 
       // Test PostToolUse response
       const postResult = await runHook(bunPath, hookScriptPath, 'PostToolUse', MOCK_DATA.postToolUse)
       expect(postResult.response).to.deep.equal({
         decision: 'block',
-        reason: 'Test block'
+        reason: 'Test block',
       })
 
       // Test UserPromptSubmit response
@@ -327,7 +327,7 @@ runHook({
       expect(promptResult.response).to.deep.equal({
         decision: 'approve',
         contextFiles: ['test.ts'],
-        updatedPrompt: 'Updated: Please run the tests'
+        updatedPrompt: 'Updated: Please run the tests',
       })
     })
   })
@@ -338,7 +338,7 @@ runHook({
       const testSessionId = `test-session-${Date.now()}`
       const testPreData = {...MOCK_DATA.preToolUse, session_id: testSessionId}
       const testPostData = {...MOCK_DATA.postToolUse, session_id: testSessionId}
-      
+
       const hookScript = `#!/usr/bin/env bun
 import {runHook} from './lib'
 import {saveSessionData} from './session'
@@ -366,17 +366,17 @@ runHook({
       // Check that session file was created and contains both entries
       const sessionFile = path.join(sessionDir, `${testSessionId}.json`)
       expect(await fs.pathExists(sessionFile)).to.be.true
-      
+
       // Verify the content of session file
       const sessionData = await fs.readJson(sessionFile)
       expect(sessionData).to.be.an('array')
       expect(sessionData).to.have.lengthOf(2)
-      
+
       // Check that both hook types are present
       const hookTypes = sessionData.map((entry: any) => entry.hookType)
       expect(hookTypes).to.include('PreToolUse')
       expect(hookTypes).to.include('PostToolUse')
-      
+
       // Verify session IDs
       sessionData.forEach((entry: any) => {
         expect(entry.payload.session_id).to.equal(testSessionId)
@@ -386,14 +386,19 @@ runHook({
 })
 
 // Helper function to run a hook and capture output
-async function runHook(bunExecutable: string, scriptPath: string, hookType: string, payload: any): Promise<{
+async function runHook(
+  bunExecutable: string,
+  scriptPath: string,
+  hookType: string,
+  payload: any,
+): Promise<{
   stdout: string
   stderr: string
   response: any
 }> {
   return new Promise((resolve, reject) => {
     const child = spawn(bunExecutable, [scriptPath, hookType], {
-      cwd: path.dirname(scriptPath)
+      cwd: path.dirname(scriptPath),
     })
 
     let stdout = ''
@@ -424,7 +429,7 @@ async function runHook(bunExecutable: string, scriptPath: string, hookType: stri
       try {
         // Filter out console.log lines and find the JSON response
         const lines = stdout.trim().split('\n')
-        const jsonLine = lines.find(line => {
+        const jsonLine = lines.find((line) => {
           try {
             JSON.parse(line)
             return true
@@ -442,7 +447,7 @@ async function runHook(bunExecutable: string, scriptPath: string, hookType: stri
       resolve({
         stdout,
         stderr,
-        response
+        response,
       })
     })
 

@@ -56,7 +56,7 @@ let transcriptCache: {
 } = {
   path: null,
   content: null,
-  lastRead: 0
+  lastRead: 0,
 }
 
 const CACHE_TTL = 5000 // 5 seconds
@@ -68,11 +68,13 @@ export function getTranscript(): string[] {
   }
 
   const now = Date.now()
-  
+
   // Return cached content if still valid
-  if (transcriptCache.path === transcriptPath && 
-      transcriptCache.content && 
-      now - transcriptCache.lastRead < CACHE_TTL) {
+  if (
+    transcriptCache.path === transcriptPath &&
+    transcriptCache.content &&
+    now - transcriptCache.lastRead < CACHE_TTL
+  ) {
     return transcriptCache.content
   }
 
@@ -80,14 +82,14 @@ export function getTranscript(): string[] {
     const fs = require('fs')
     const content = fs.readFileSync(transcriptPath, 'utf-8')
     const lines = content.split('\n').filter(Boolean)
-    
+
     // Update cache
     transcriptCache = {
       path: transcriptPath,
       content: lines,
-      lastRead: now
+      lastRead: now,
     }
-    
+
     return lines
   } catch (error) {
     return []
@@ -102,44 +104,45 @@ export function getTranscriptStream(): AsyncIterable<string> {
 
   const fs = require('fs')
   const readline = require('readline')
-  
+
   try {
     const fileStream = fs.createReadStream(transcriptPath)
     const rl = readline.createInterface({
       input: fileStream,
-      crlfDelay: Infinity
+      crlfDelay: Infinity,
     })
-    
+
     return rl
   } catch (error) {
     return (async function* () {})()
   }
 }
 
-export function searchTranscript(query: string | RegExp, options?: { 
-  caseSensitive?: boolean, 
-  maxResults?: number,
-  reverse?: boolean 
-}): string[] {
+export function searchTranscript(
+  query: string | RegExp,
+  options?: {
+    caseSensitive?: boolean
+    maxResults?: number
+    reverse?: boolean
+  },
+): string[] {
   const transcript = getTranscript()
-  const { caseSensitive = false, maxResults = Infinity, reverse = false } = options || {}
-  
+  const {caseSensitive = false, maxResults = Infinity, reverse = false} = options || {}
+
   const results: string[] = []
   const searchArray = reverse ? transcript.slice().reverse() : transcript
-  
+
   for (const line of searchArray) {
     if (results.length >= maxResults) break
-    
+
     if (typeof query === 'string') {
-      const matches = caseSensitive 
-        ? line.includes(query)
-        : line.toLowerCase().includes(query.toLowerCase())
+      const matches = caseSensitive ? line.includes(query) : line.toLowerCase().includes(query.toLowerCase())
       if (matches) results.push(line)
     } else {
       if (query.test(line)) results.push(line)
     }
   }
-  
+
   return results
 }
 
@@ -151,29 +154,28 @@ export function getLastNMessages(n: number): string[] {
 export function getMessagesSince(timestamp: Date): string[] {
   const transcript = getTranscript()
   const timestampStr = timestamp.toISOString()
-  
-  const index = transcript.findIndex(line => {
+
+  const index = transcript.findIndex((line) => {
     const match = line.match(/^\[([\d-T:.Z]+)\]/)
     if (match && match[1] >= timestampStr) {
       return true
     }
     return false
   })
-  
+
   return index === -1 ? [] : transcript.slice(index)
 }
 
-export function findToolUsage(toolName: string): Array<{ line: string, index: number }> {
+export function findToolUsage(toolName: string): Array<{line: string; index: number}> {
   const transcript = getTranscript()
-  const results: Array<{ line: string, index: number }> = []
-  
+  const results: Array<{line: string; index: number}> = []
+
   transcript.forEach((line, index) => {
-    if (line.includes(`tool_name="${toolName}"`) || 
-        line.includes(`"toolName":"${toolName}"`)) {
-      results.push({ line, index })
+    if (line.includes(`tool_name="${toolName}"`) || line.includes(`"toolName":"${toolName}"`)) {
+      results.push({line, index})
     }
   })
-  
+
   return results
 }
 
@@ -193,18 +195,18 @@ export function getSystemMessages(): string[] {
 export function runHooks(handlers: Handlers) {
   // Buffer to collect all STDIN data
   let inputBuffer = ''
-  
+
   // Read all data from stdin
   process.stdin.on('data', (chunk) => {
     inputBuffer += chunk.toString()
   })
-  
+
   // Process once all data is received
   process.stdin.on('end', async () => {
     try {
       const input = JSON.parse(inputBuffer) as HookArgs
       const handler = handlers[input.type]
-      
+
       if (handler) {
         const result = await handler(input)
         if (result) {
@@ -213,18 +215,22 @@ export function runHooks(handlers: Handlers) {
       }
     } catch (error) {
       // Silently fail to avoid interfering with Claude
-      console.error(JSON.stringify({ 
-        message: `Hook error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        severity: 'error'
-      }))
+      console.error(
+        JSON.stringify({
+          message: `Hook error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          severity: 'error',
+        }),
+      )
     }
   })
-  
+
   // Handle errors on stdin
   process.stdin.on('error', (error) => {
-    console.error(JSON.stringify({ 
-      message: `STDIN error: ${error.message}`,
-      severity: 'error'
-    }))
+    console.error(
+      JSON.stringify({
+        message: `STDIN error: ${error.message}`,
+        severity: 'error',
+      }),
+    )
   })
 }

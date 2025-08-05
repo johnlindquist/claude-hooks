@@ -1,9 +1,9 @@
+import {execSync} from 'node:child_process'
+import * as os from 'node:os'
 import * as path from 'node:path'
 import {fileURLToPath} from 'node:url'
-import {execSync} from 'node:child_process'
 import {expect} from 'chai'
 import fs from 'fs-extra'
-import * as os from 'node:os'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -52,9 +52,7 @@ describe('Smoke Tests - Generated Files', () => {
       const settings = await fs.readJson(settingsPath)
 
       const bunCommand = settings.hooks.PreToolUse.command
-      expect(bunCommand).to.satisfy((cmd: string) => 
-        path.isAbsolute(cmd) || cmd === 'bun'
-      )
+      expect(bunCommand).to.satisfy((cmd: string) => path.isAbsolute(cmd) || cmd === 'bun')
     })
   })
 
@@ -154,7 +152,7 @@ describe('Smoke Tests - Generated Files', () => {
       const sessionPath = path.join(testDir, '.claude/hooks/session.ts')
       const exists = await fs.pathExists(sessionPath)
       expect(exists).to.be.true
-      
+
       const content = await fs.readFile(sessionPath, 'utf8')
       expect(content).to.include('export')
     })
@@ -166,16 +164,16 @@ describe('Smoke Tests - Generated Files', () => {
       const testInput = JSON.stringify({
         type: 'PreToolUse',
         toolName: 'Edit',
-        toolArgs: { file_path: 'test.js', old_string: 'foo', new_string: 'bar' }
+        toolArgs: {file_path: 'test.js', old_string: 'foo', new_string: 'bar'},
       })
 
       try {
         const output = execSync(`bun ${hooksPath}`, {
           input: testInput,
           encoding: 'utf8',
-          stdio: ['pipe', 'pipe', 'pipe']
+          stdio: ['pipe', 'pipe', 'pipe'],
         })
-        
+
         // Should either return empty (no blocking) or valid JSON
         if (output.trim()) {
           const result = JSON.parse(output)

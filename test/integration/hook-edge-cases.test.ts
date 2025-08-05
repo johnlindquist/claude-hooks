@@ -1,9 +1,9 @@
-import {expect} from 'chai'
 import {spawn} from 'node:child_process'
-import * as fs from 'fs-extra'
+import {tmpdir} from 'node:os'
 import * as path from 'node:path'
 import {fileURLToPath} from 'node:url'
-import {tmpdir} from 'node:os'
+import {expect} from 'chai'
+import * as fs from 'fs-extra'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -16,16 +16,16 @@ describe('Hook Edge Cases and Race Conditions', () => {
   beforeEach(async () => {
     tempDir = path.join(tmpdir(), `claude-hooks-edge-${Date.now()}`)
     await fs.ensureDir(tempDir)
-    
+
     const hooksDir = path.join(tempDir, '.claude', 'hooks')
     await fs.ensureDir(hooksDir)
-    
+
     const templatesDir = path.join(__dirname, '..', '..', 'templates', 'hooks')
     await fs.copy(path.join(templatesDir, 'lib.ts'), path.join(hooksDir, 'lib.ts'))
     await fs.copy(path.join(templatesDir, 'session.ts'), path.join(hooksDir, 'session.ts'))
-    
+
     hookScriptPath = path.join(hooksDir, 'index.ts')
-    
+
     // Find bun executable
     bunPath = process.env.HOME ? path.join(process.env.HOME, '.bun/bin/bun') : 'bun'
   })
@@ -38,7 +38,7 @@ describe('Hook Edge Cases and Race Conditions', () => {
     it('should not execute both pre and post hooks for the same event', async () => {
       // This tests the scenario you mentioned where both hooks were firing
       const executionLog: string[] = []
-      
+
       const hookScript = `#!/usr/bin/env bun
 import {runHook} from './lib'
 import * as fs from 'fs'
@@ -74,7 +74,7 @@ runHook({
         transcript_path: '/tmp/test.jsonl',
         hook_event_name: 'PreToolUse',
         tool_name: 'Edit',
-        tool_input: {file_path: 'test.js'}
+        tool_input: {file_path: 'test.js'},
       })
 
       // Read execution log
@@ -84,7 +84,7 @@ runHook({
       // Should only have one execution
       expect(executions).to.have.lengthOf(1)
       expect(executions[0]).to.match(/^PRE:Edit:\d+$/)
-      expect(executions.some(e => e.startsWith('POST:'))).to.be.false
+      expect(executions.some((e) => e.startsWith('POST:'))).to.be.false
     })
 
     it('should handle rapid sequential hook calls without cross-contamination', async () => {
@@ -117,7 +117,7 @@ runHook(handlers)
           transcript_path: '/tmp/test.jsonl',
           hook_event_name: 'PreToolUse',
           tool_name: 'Edit',
-          tool_input: {file_path: 'file1.js'}
+          tool_input: {file_path: 'file1.js'},
         }),
         runHook(bunPath, hookScriptPath, 'PostToolUse', {
           session_id: 'rapid-001',
@@ -125,15 +125,15 @@ runHook(handlers)
           hook_event_name: 'PostToolUse',
           tool_name: 'Write',
           tool_input: {file_path: 'file2.js'},
-          tool_response: {success: true}
+          tool_response: {success: true},
         }),
         runHook(bunPath, hookScriptPath, 'PreToolUse', {
           session_id: 'rapid-001',
           transcript_path: '/tmp/test.jsonl',
           hook_event_name: 'PreToolUse',
           tool_name: 'Bash',
-          tool_input: {command: 'ls'}
-        })
+          tool_input: {command: 'ls'},
+        }),
       ]
 
       const results = await Promise.all(promises)
@@ -141,10 +141,10 @@ runHook(handlers)
       // Verify each hook got the correct result
       expect(results[0].stdout).to.include('PRE_RESULT:Edit')
       expect(results[0].stdout).not.to.include('POST_RESULT')
-      
+
       expect(results[1].stdout).to.include('POST_RESULT:Write:true')
       expect(results[1].stdout).not.to.include('PRE_RESULT')
-      
+
       expect(results[2].stdout).to.include('PRE_RESULT:Bash')
       expect(results[2].stdout).not.to.include('POST_RESULT')
     })
@@ -179,7 +179,7 @@ runHook({
         transcript_path: '/tmp/test.jsonl',
         hook_event_name: 'PreToolUse', // Mismatched event name
         tool_name: 'Edit',
-        tool_input: {file_path: 'test.js'}
+        tool_input: {file_path: 'test.js'},
       })
 
       // Should execute based on argv, not payload.hook_event_name
@@ -205,7 +205,7 @@ runHook({
       const result = await runHook(bunPath, hookScriptPath, 'UnknownHookType', {
         session_id: 'unknown-test',
         transcript_path: '/tmp/test.jsonl',
-        hook_event_name: 'UnknownHookType'
+        hook_event_name: 'UnknownHookType',
       })
 
       // Should return empty response without executing any handler
@@ -246,7 +246,7 @@ runHook({
 `
       await fs.writeFile(hookScriptPath, hookScript)
       await fs.chmod(hookScriptPath, 0o755)
-      
+
       // Initialize count file
       await fs.writeFile(path.join(tempDir, 'init-count.txt'), '0')
 
@@ -256,7 +256,7 @@ runHook({
         transcript_path: '/tmp/test.jsonl',
         hook_event_name: 'PreToolUse',
         tool_name: 'Edit',
-        tool_input: {}
+        tool_input: {},
       })
 
       const result2 = await runHook(bunPath, hookScriptPath, 'PostToolUse', {
@@ -265,17 +265,17 @@ runHook({
         hook_event_name: 'PostToolUse',
         tool_name: 'Edit',
         tool_input: {},
-        tool_response: {success: true}
+        tool_response: {success: true},
       })
 
       // Each invocation is a separate process, so init count should increment
       expect(result1.stdout).to.include('INIT_COUNT:1')
       expect(result2.stdout).to.include('INIT_COUNT:2')
-      
+
       // But only the correct handler should execute
       expect(result1.stdout).to.include('PreToolUse:1')
       expect(result1.stdout).not.to.include('PostToolUse')
-      
+
       expect(result2.stdout).to.include('PostToolUse:2')
       expect(result2.stdout).not.to.include('PreToolUse:2')
     })
@@ -309,7 +309,7 @@ runHook({
         transcript_path: '/tmp/test.jsonl',
         hook_event_name: 'PreToolUse',
         tool_name: 'ErrorTool',
-        tool_input: {}
+        tool_input: {},
       })
 
       // Should handle error gracefully
@@ -323,7 +323,7 @@ runHook({
         hook_event_name: 'PostToolUse',
         tool_name: 'Edit',
         tool_input: {},
-        tool_response: {success: true}
+        tool_response: {success: true},
       })
 
       expect(successResult.stdout).to.include('PostToolUse:Success')
@@ -333,14 +333,19 @@ runHook({
 })
 
 // Helper function
-async function runHook(bunExecutable: string, scriptPath: string, hookType: string, payload: any): Promise<{
+async function runHook(
+  bunExecutable: string,
+  scriptPath: string,
+  hookType: string,
+  payload: any,
+): Promise<{
   stdout: string
   stderr: string
   response: any
 }> {
   return new Promise((resolve, reject) => {
     const child = spawn(bunExecutable, [scriptPath, hookType], {
-      cwd: path.dirname(scriptPath)
+      cwd: path.dirname(scriptPath),
     })
 
     let stdout = ''
@@ -362,7 +367,7 @@ async function runHook(bunExecutable: string, scriptPath: string, hookType: stri
       let response = {}
       try {
         const lines = stdout.trim().split('\n')
-        const jsonLine = lines.find(line => {
+        const jsonLine = lines.find((line) => {
           try {
             JSON.parse(line)
             return true
@@ -380,7 +385,7 @@ async function runHook(bunExecutable: string, scriptPath: string, hookType: stri
       resolve({
         stdout,
         stderr,
-        response
+        response,
       })
     })
 

@@ -1,26 +1,26 @@
 #!/usr/bin/env bun
 
-import type { HookHandler } from './lib'
-import { runHooks } from './lib'
+import type {HookHandler} from './lib'
+import {runHooks} from './lib'
 
 // PreToolUse handler - called before Claude uses any tool
 export const PreToolUse: HookHandler = (args) => {
   // Example: Log when Claude is about to edit files
   if (args.toolName === 'Edit' && args.toolArgs) {
-    const { file_path } = args.toolArgs as { file_path: string }
+    const {file_path} = args.toolArgs as {file_path: string}
     console.log(`📝 Claude is editing: ${file_path}`)
   }
 
   // Example: Block dangerous bash commands
   if (args.toolName === 'Bash' && args.toolArgs) {
-    const { command } = args.toolArgs as { command: string }
+    const {command} = args.toolArgs as {command: string}
     console.log(`🚀 Running command: ${command}`)
 
     // Block dangerous commands
     if (command.includes('rm -rf /') || command.includes('rm -rf ~')) {
       return {
         block: true,
-        message: `Dangerous command blocked: ${command}`
+        message: `Dangerous command blocked: ${command}`,
       }
     }
   }
@@ -54,15 +54,15 @@ export const Stop: HookHandler = (args) => {
 // SessionStart handler - called when a new session starts
 export const SessionStart: HookHandler = (args) => {
   console.log(`🚀 New session started: ${args.sessionId}`)
-  
+
   if (args.workingDirectory) {
     console.log(`📍 Working directory: ${args.workingDirectory}`)
   }
-  
+
   if (args.isPlanMode) {
     console.log('📋 Plan mode is active')
   }
-  
+
   // Add your session initialization logic here
 }
 
@@ -72,5 +72,5 @@ runHooks({
   PostToolUse,
   Notification,
   Stop,
-  SessionStart
+  SessionStart,
 })
