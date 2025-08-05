@@ -72,7 +72,12 @@ export default class Init extends Command {
   private copyHookFiles(hooksDir: string): void {
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = path.dirname(__filename)
-    const templatesDir = path.join(__dirname, '..', '..', '..', 'templates', 'hooks')
+    
+    // When running compiled JS, we're in dist/commands, so go up two levels
+    // When running from source, we're in src/commands, so go up two levels
+    // In both cases, templates is at the root
+    const projectRoot = path.join(__dirname, '..', '..')
+    const templatesDir = path.join(projectRoot, 'templates', 'hooks')
 
     const filesToCopy = ['index.ts', 'lib.ts', 'session.ts']
 
