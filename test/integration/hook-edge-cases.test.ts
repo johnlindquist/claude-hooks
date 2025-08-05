@@ -68,30 +68,30 @@ describe('Hook Edge Cases and Race Conditions', () => {
 
   describe('Duplicate Hook Execution Prevention', () => {
     it('should not execute both pre and post hooks for the same event', async () => {
-      // This tests the scenario you mentioned where both hooks were firing
+      // This tests the scenario where both hooks were firing
       const _executionLog: string[] = []
 
       const hookScript = `#!/usr/bin/env bun
-import {runHook} from './lib'
+import {runHooks} from './lib'
 import * as fs from 'fs'
 
 const logFile = '${path.join(tempDir, 'execution.log')}'
 
-const preToolUse = async (payload) => {
-  const log = 'PRE:' + payload.tool_name + ':' + Date.now()
+const PreToolUse = async (payload) => {
+  const log = 'PRE:' + payload.toolName + ':' + Date.now()
   fs.appendFileSync(logFile, log + '\\n')
   return {}
 }
 
-const postToolUse = async (payload) => {
-  const log = 'POST:' + payload.tool_name + ':' + Date.now()
+const PostToolUse = async (payload) => {
+  const log = 'POST:' + payload.toolName + ':' + Date.now()
   fs.appendFileSync(logFile, log + '\\n')
   return {}
 }
 
-runHook({
-  preToolUse,
-  postToolUse
+runHooks({
+  PreToolUse,
+  PostToolUse
 })
 `
       await fs.writeFile(hookScriptPath, hookScript)
@@ -103,15 +103,15 @@ runHook({
       // Test PreToolUse
       await runHook(hookScriptPath, {
         type: 'PreToolUse',
-        tool_name: 'Edit',
-        tool_input: {file_path: 'test.js'},
+        toolName: 'Edit',
+        toolArgs: {file_path: 'test.js'},
       })
 
       // Test PostToolUse
       await runHook(hookScriptPath, {
         type: 'PostToolUse',
-        tool_name: 'Edit',
-        tool_response: {success: true},
+        toolName: 'Edit',
+        toolResult: {success: true},
       })
 
       // Read execution log
@@ -126,11 +126,11 @@ runHook({
 
     it('should handle rapid sequential hook calls without cross-contamination', async () => {
       const hookScript = `#!/usr/bin/env bun
-import {runHook} from './lib'
+import {runHooks} from './lib'
 
 let callCount = 0
 
-const preToolUse = async (payload) => {
+const PreToolUse = async (payload) => {
   callCount++
   const myCount = callCount
   
@@ -138,12 +138,12 @@ const preToolUse = async (payload) => {
   await new Promise(resolve => setTimeout(resolve, Math.random() * 10))
   
   return {
-    message: \`Call \${myCount}: \${payload.tool_name}\`
+    message: \`Call \${myCount}: \${payload.toolName}\`
   }
 }
 
-runHook({
-  preToolUse
+runHooks({
+  PreToolUse
 })
 `
       await fs.writeFile(hookScriptPath, hookScript)
@@ -155,7 +155,7 @@ runHook({
         promises.push(
           runHook(hookScriptPath, {
             type: 'PreToolUse',
-            tool_name: `Tool${i}`,
+            toolName: `Tool${i}`,
           }),
         )
       }
@@ -173,20 +173,20 @@ runHook({
     it('should ignore hooks when wrong hook type is specified in argv', async () => {
       // This tests the fix for the argv[2] hook type checking
       const hookScript = `#!/usr/bin/env bun
-import {runHook} from './lib'
+import {runHooks} from './lib'
 
 // Simulate wrong hook type in argv
 process.argv[2] = 'WrongHookType'
 
-const preToolUse = async (payload) => {
+const PreToolUse = async (payload) => {
   return {
     message: 'This should not execute',
     block: true
   }
 }
 
-runHook({
-  preToolUse
+runHooks({
+  PreToolUse
 })
 `
       await fs.writeFile(hookScriptPath, hookScript)
@@ -194,7 +194,7 @@ runHook({
 
       const {response} = await runHook(hookScriptPath, {
         type: 'PreToolUse',
-        tool_name: 'Edit',
+        toolName: 'Edit',
       })
 
       // Hook should not be blocked since argv check should be removed
@@ -203,7 +203,7 @@ runHook({
 
     it('should handle unknown hook types gracefully', async () => {
       const hookScript = `#!/usr/bin/env bun
-import {runHook} from './lib'
+import {runHooks} from './lib'
 
 const unknownHook = async (payload) => {
   return {
@@ -211,7 +211,7 @@ const unknownHook = async (payload) => {
   }
 }
 
-runHook({
+runHooks({
   unknownHook
 })
 `
@@ -231,7 +231,7 @@ runHook({
   describe('Shared Code Execution Prevention', () => {
     it('should not execute shared initialization code multiple times', async () => {
       const hookScript = `#!/usr/bin/env bun
-import {runHook} from './lib'
+import {runHooks} from './lib'
 import * as fs from 'fs'
 
 const countFile = '${path.join(tempDir, 'init-count.txt')}'
@@ -241,21 +241,21 @@ let count = parseInt(fs.readFileSync(countFile, 'utf-8'))
 count++
 fs.writeFileSync(countFile, count.toString())
 
-const preToolUse = async (payload) => {
+const PreToolUse = async (payload) => {
   return {
     message: \`Init count: \${count}\`
   }
 }
 
-const postToolUse = async (payload) => {
+const PostToolUse = async (payload) => {
   return {
     message: \`Init count: \${count}\`
   }
 }
 
-runHook({
-  preToolUse,
-  postToolUse
+runHooks({
+  PreToolUse,
+  PostToolUse
 })
 `
       await fs.writeFile(hookScriptPath, hookScript)
@@ -267,12 +267,12 @@ runHook({
       // Run multiple hooks
       await runHook(hookScriptPath, {
         type: 'PreToolUse',
-        tool_name: 'Edit',
+        toolName: 'Edit',
       })
 
       await runHook(hookScriptPath, {
         type: 'PostToolUse',
-        tool_name: 'Edit',
+        toolName: 'Edit',
       })
 
       // Check that initialization ran twice (once per process)
@@ -284,10 +284,10 @@ runHook({
   describe('Error Handling and Recovery', () => {
     it('should handle handler errors without affecting other hooks', async () => {
       const hookScript = `#!/usr/bin/env bun
-import {runHook} from './lib'
+import {runHooks} from './lib'
 
-const preToolUse = async (payload) => {
-  if (payload.tool_name === 'ErrorTool') {
+const PreToolUse = async (payload) => {
+  if (payload.toolName === 'ErrorTool') {
     throw new Error('Intentional error')
   }
   return {
@@ -295,15 +295,15 @@ const preToolUse = async (payload) => {
   }
 }
 
-const postToolUse = async (payload) => {
+const PostToolUse = async (payload) => {
   return {
     message: 'PostToolUse works'
   }
 }
 
-runHook({
-  preToolUse,
-  postToolUse
+runHooks({
+  PreToolUse,
+  PostToolUse
 })
 `
       await fs.writeFile(hookScriptPath, hookScript)
@@ -312,7 +312,7 @@ runHook({
       // Test with error
       const {response: errorResponse} = await runHook(hookScriptPath, {
         type: 'PreToolUse',
-        tool_name: 'ErrorTool',
+        toolName: 'ErrorTool',
       })
 
       // Should handle error gracefully
@@ -322,7 +322,7 @@ runHook({
       // Test normal operation
       const {response: successResponse} = await runHook(hookScriptPath, {
         type: 'PreToolUse',
-        tool_name: 'NormalTool',
+        toolName: 'NormalTool',
       })
 
       expect(successResponse).to.deep.equal({message: 'Success'})
@@ -330,57 +330,10 @@ runHook({
       // Test other hook still works
       const {response: postResponse} = await runHook(hookScriptPath, {
         type: 'PostToolUse',
-        tool_name: 'AnyTool',
+        toolName: 'AnyTool',
       })
 
       expect(postResponse).to.deep.equal({message: 'PostToolUse works'})
     })
   })
 })
-
-// New helper for the refactored runHook to work with the new lib.ts structure
-async function runHookWithNewLib(
-  scriptPath: string,
-  payload: Record<string, any>,
-): Promise<{response: Record<string, any>; stdout: string; stderr: string}> {
-  return new Promise((resolve) => {
-    const child = spawn('bun', [scriptPath], {
-      cwd: path.dirname(scriptPath),
-    })
-
-    let stdout = ''
-    let stderr = ''
-
-    child.stdout.on('data', (data) => {
-      stdout += data.toString()
-    })
-
-    child.stderr.on('data', (data) => {
-      stderr += data.toString()
-    })
-
-    child.on('close', (_code) => {
-      let response = {}
-      try {
-        // Parse the last non-empty line as JSON
-        const lines = stdout.trim().split('\n').filter(Boolean)
-        if (lines.length > 0) {
-          const lastLine = lines[lines.length - 1]
-          // Try to find JSON in the output
-          const jsonMatch = lastLine.match(/\{.*\}/)
-          if (jsonMatch) {
-            response = JSON.parse(jsonMatch[0])
-          }
-        }
-      } catch (_e) {
-        // Ignore parse errors
-      }
-
-      resolve({response, stdout, stderr})
-    })
-
-    // Send the payload
-    child.stdin.write(JSON.stringify(payload))
-    child.stdin.end()
-  })
-}
