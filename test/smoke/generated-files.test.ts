@@ -159,7 +159,7 @@ describe('Smoke Tests - Generated Files', () => {
   })
 
   describe('Runtime execution test', () => {
-    it('should handle PreToolUse hook without errors', async () => {
+    it('should handle PreToolUse hook without errors', async function() {
       const hooksPath = path.join(testDir, '.claude/hooks/index.ts')
       const testInput = JSON.stringify({
         type: 'PreToolUse',
