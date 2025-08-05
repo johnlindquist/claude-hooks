@@ -19,7 +19,6 @@
   "devDependencies": {
     "@biomejs/biome": "2.0.6",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
-    "@oclif/prettier-config": "^0.2.1",
     "@oclif/test": "^4",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/git": "^10.0.1",
