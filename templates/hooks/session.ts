@@ -1,7 +1,7 @@
 import {mkdir, readFile, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import * as path from 'node:path'
-import type {HookPayload} from './lib'
+import type {HookArgs, HookPayload} from './lib'
 
 const SESSIONS_DIR = path.join(tmpdir(), 'claude-hooks-sessions')
 
@@ -11,7 +11,12 @@ export async function saveSessionData(hookType: string, payload: HookPayload): P
     await mkdir(SESSIONS_DIR, {recursive: true})
 
     const timestamp = new Date().toISOString()
-    const sessionFile = path.join(SESSIONS_DIR, `${payload.session_id}.json`)
+    const sessionId = (payload as HookArgs).sessionId ?? (payload as any).session_id
+    if (!sessionId) {
+      // If we do not have a session id, do not write a file to avoid noisy entries
+      return
+    }
+    const sessionFile = path.join(SESSIONS_DIR, `${sessionId}.json`)
 
     let sessionData: Array<{timestamp: string; hookType: string; payload: HookPayload}> = []
     try {

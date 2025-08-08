@@ -40,6 +40,10 @@ export interface HookResult {
 
 export type HookHandler = (args: HookArgs) => HookResult | undefined | Promise<HookResult | undefined>
 
+// Backwards-compatible alias for payloads used by helper utilities
+// Some helper files import HookPayload; aliasing avoids breaking changes
+export type HookPayload = HookArgs
+
 interface Handlers {
   PreToolUse?: HookHandler
   PostToolUse?: HookHandler

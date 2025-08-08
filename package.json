@@ -14,7 +14,8 @@
     "chalk": "^5.4.1",
     "fs-extra": "^11.3.0",
     "inquirer": "^12.9.0",
-    "ora": "^8.2.0"
+    "ora": "^8.2.0",
+    "signal-exit": "^4"
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.6",
