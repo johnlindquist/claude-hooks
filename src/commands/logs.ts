@@ -5,7 +5,7 @@ import chalk from 'chalk'
 import fs from 'fs-extra'
 
 export default class Logs extends Command {
-  static description = `Display paths to Claude session logs
+  static override description = `Display paths to Claude session logs
 
 Finds and displays paths to Claude hook session logs for debugging and analysis:
 • Shows the path to the most recent session log by default
@@ -14,7 +14,7 @@ Finds and displays paths to Claude hook session logs for debugging and analysis:
 • Session logs contain detailed hook execution data and payloads
 • Logs are stored in: <system-temp-dir>/claude-hooks-sessions/`
 
-  static examples = [
+  static override examples = [
     {
       description: 'Show path to the latest session log',
       command: '<%= config.bin %> <%= command.id %>',
@@ -29,7 +29,7 @@ Finds and displays paths to Claude hook session logs for debugging and analysis:
     },
   ]
 
-  static flags = {
+  static override flags = {
     list: Flags.boolean({
       char: 'l',
       description: 'List all session files',
@@ -40,7 +40,7 @@ Finds and displays paths to Claude hook session logs for debugging and analysis:
     }),
   }
 
-  public async run(): Promise<void> {
+  public override async run(): Promise<void> {
     const {flags} = await this.parse(Logs)
 
     // Get the sessions directory from temp
@@ -49,8 +49,8 @@ Finds and displays paths to Claude hook session logs for debugging and analysis:
 
     // Check if sessions directory exists
     if (!(await fs.pathExists(sessionsDir))) {
-      console.log(chalk.yellow('No session logs found. The sessions directory does not exist.'))
-      console.log(chalk.gray(`Expected location: ${sessionsDir}`))
+      this.warn('No session logs found. The sessions directory does not exist.')
+      this.log(chalk.gray(`Expected location: ${sessionsDir}`))
       return
     }
 
@@ -59,7 +59,7 @@ Finds and displays paths to Claude hook session logs for debugging and analysis:
     const sessionFiles = files.filter((f) => f.endsWith('.json'))
 
     if (sessionFiles.length === 0) {
-      console.log(chalk.yellow('No session logs found.'))
+      this.warn('No session logs found.')
       return
     }
 
@@ -82,14 +82,14 @@ Finds and displays paths to Claude hook session logs for debugging and analysis:
 
     // Handle list flag
     if (flags.list) {
-      console.log(chalk.blue.bold('\n📋 Session Logs:\n'))
+      this.log(chalk.blue.bold('\n📋 Session Logs:\n'))
       fileStats.forEach((stat, index) => {
         const isLatest = index === 0
         const marker = isLatest ? chalk.green('→') : ' '
         const time = stat.mtime.toLocaleString()
-        console.log(`${marker} ${chalk.cyan(stat.sessionId)} ${chalk.gray(time)}`)
+        this.log(`${marker} ${chalk.cyan(stat.sessionId)} ${chalk.gray(time)}`)
       })
-      console.log()
+      this.log('')
       return
     }
 
@@ -98,7 +98,7 @@ Finds and displays paths to Claude hook session logs for debugging and analysis:
     if (flags.id) {
       targetFile = fileStats.find((stat) => stat.sessionId.toLowerCase().includes(flags.id!.toLowerCase()))
       if (!targetFile) {
-        console.log(chalk.red(`No session found matching ID: ${flags.id}`))
+        this.warn(chalk.red(`No session found matching ID: ${flags.id}`))
         return
       }
     } else {
@@ -106,6 +106,6 @@ Finds and displays paths to Claude hook session logs for debugging and analysis:
       targetFile = fileStats[0]
     }
 
-    console.log(targetFile.path)
+    this.log(targetFile.path)
   }
 }

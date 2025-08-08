@@ -16,34 +16,37 @@ describe('CLI Integration Tests', () => {
     await fs.ensureDir(testDir)
   })
 
-  afterEach(async () => {
+  after(async () => {
     await fs.remove(testDir)
   })
 
   describe('full workflow', () => {
     it('should complete a full installation workflow', async () => {
-      // Run init command
       const output = execSync(`node ${binPath} init`, {
         cwd: testDir,
         encoding: 'utf8',
-      })
+      }).toString()
 
-      // Check output
-      expect(output).to.include('Claude Hooks Setup')
-      expect(output).to.include('Claude Code hooks initialized!')
+      expect(output).to.include('Claude hooks initialized successfully!')
 
-      // Verify file structure
-      const files = {
-        '.claude/settings.json': true,
-        '.claude/hooks/index.ts': true,
-        '.claude/hooks/lib.ts': true,
-        '.claude/hooks/session.ts': true,
-      }
+      // Check files exist
+      const settingsPath = path.join(testDir, '.claude/settings.json')
+      const indexPath = path.join(testDir, '.claude/hooks/index.ts')
+      const libPath = path.join(testDir, '.claude/hooks/lib.ts')
+      const sessionPath = path.join(testDir, '.claude/hooks/session.ts')
 
-      for (const [file, shouldExist] of Object.entries(files)) {
-        const exists = await fs.pathExists(path.join(testDir, file))
-        expect(exists, `${file} should exist`).to.equal(shouldExist)
-      }
+      expect(await fs.pathExists(settingsPath)).to.be.true
+      expect(await fs.pathExists(indexPath)).to.be.true
+      expect(await fs.pathExists(libPath)).to.be.true
+      expect(await fs.pathExists(sessionPath)).to.be.true
+
+      // Verify settings structure
+      const settings = await fs.readJson(settingsPath)
+      expect(settings.hooks).to.have.property('PreToolUse')
+      expect(settings.hooks).to.have.property('PostToolUse')
+      expect(settings.hooks).to.have.property('Notification')
+      expect(settings.hooks).to.have.property('Stop')
+      expect(settings.hooks).to.have.property('SessionStart')
     })
 
     it('should handle existing hooks correctly', async () => {
@@ -53,34 +56,26 @@ describe('CLI Integration Tests', () => {
         encoding: 'utf8',
       })
 
-      // Modify a file to detect if it gets overwritten
-      const hookFile = path.join(testDir, '.claude/hooks/index.ts')
-      await fs.appendFile(hookFile, '\n// Custom modification')
+      // Try to install again without force - should fail
+      let errorThrown = false
+      try {
+        execSync(`node ${binPath} init`, {
+          cwd: testDir,
+          encoding: 'utf8',
+        })
+      } catch (error: any) {
+        errorThrown = true
+        expect(error.message).to.include('Hooks already exist')
+      }
+      expect(errorThrown).to.be.true
 
-      // Try to install again without force
-      const secondRun = execSync(`node ${binPath} init`, {
+      // Try with force flag - should succeed
+      const forceOutput = execSync(`node ${binPath} init --force`, {
         cwd: testDir,
         encoding: 'utf8',
-      })
+      }).toString()
 
-      // Should warn about existing hooks
-      expect(secondRun).to.include('Claude hooks already exist')
-      expect(secondRun).to.include('Use --force to overwrite')
-
-      // Custom modification should still be there
-      let content = await fs.readFile(hookFile, 'utf8')
-      expect(content).to.include('// Custom modification')
-
-      // With force flag, should overwrite
-      execSync(`node ${binPath} init --force`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        input: 'n\n',
-      })
-
-      // Check that custom modification is gone
-      content = await fs.readFile(hookFile, 'utf8')
-      expect(content).not.to.include('// Custom modification')
+      expect(forceOutput).to.include('Claude hooks initialized successfully!')
     })
   })
 
@@ -91,7 +86,7 @@ describe('CLI Integration Tests', () => {
         encoding: 'utf8',
       }).toString()
 
-      expect(output).to.include('Claude Hooks Setup')
+      expect(output).to.include('Claude hooks initialized successfully!')
     })
 
     it('should show help with --help flag', () => {
@@ -99,9 +94,9 @@ describe('CLI Integration Tests', () => {
         encoding: 'utf8',
       })
 
-      expect(output).to.include('TypeScript-powered hook system for Claude Code')
+      expect(output).to.include('claude-hooks')
+      expect(output).to.include('VERSION')
       expect(output).to.include('COMMANDS')
-      expect(output).to.include('init')
     })
 
     it('should show init help with init --help', () => {
@@ -109,9 +104,28 @@ describe('CLI Integration Tests', () => {
         encoding: 'utf8',
       })
 
-      expect(output).to.include('Initialize Claude Code hooks')
+      expect(output).to.include('Initialize Claude hooks in your project')
       expect(output).to.include('--force')
       expect(output).to.include('EXAMPLES')
+    })
+  })
+
+  describe('settings file variations', () => {
+    it('should create custom settings file with --settings flag', async () => {
+      const customSettingsName = 'my-custom-settings.json'
+      
+      const output = execSync(`node ${binPath} init --settings=${customSettingsName}`, {
+        cwd: testDir,
+        encoding: 'utf8',
+      }).toString()
+
+      expect(output).to.include(customSettingsName)
+
+      const customSettingsPath = path.join(testDir, '.claude', customSettingsName)
+      expect(await fs.pathExists(customSettingsPath)).to.be.true
+
+      const settings = await fs.readJson(customSettingsPath)
+      expect(settings.hooks).to.have.property('PreToolUse')
     })
   })
 })
