@@ -343,8 +343,15 @@ export interface BaseHookResponse {
 
 // PreToolUse specific response
 export interface PreToolUseResponse extends BaseHookResponse {
+  decision?: 'approve' | 'block'
+  reason?: string
   permissionDecision?: 'allow' | 'deny' | 'ask'
   permissionDecisionReason?: string
+  hookSpecificOutput?: {
+    hookEventName: 'PreToolUse'
+    permissionDecision?: 'allow' | 'deny' | 'ask'
+    permissionDecisionReason?: string
+  }
 }
 
 // PostToolUse specific response
@@ -356,7 +363,7 @@ export interface PostToolUseResponse extends BaseHookResponse {
 // Stop/SubagentStop specific response
 export interface StopResponse extends BaseHookResponse {
   decision?: 'block'
-  reason?: string // Required when decision is 'block'
+  reason?: string
 }
 
 // UserPromptSubmit specific response
@@ -476,7 +483,7 @@ export function runHook(handlers: HookHandlers): void {
             console.log(JSON.stringify({}))
           }
           process.exit(0)
-          return // Unreachable but satisfies linter
+          break
 
         case 'SubagentStop':
           if (handlers.subagentStop) {
@@ -486,7 +493,7 @@ export function runHook(handlers: HookHandlers): void {
             console.log(JSON.stringify({}))
           }
           process.exit(0)
-          return // Unreachable but satisfies linter
+          break
 
         case 'UserPromptSubmit':
           if (handlers.userPromptSubmit) {
